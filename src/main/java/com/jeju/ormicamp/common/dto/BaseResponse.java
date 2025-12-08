@@ -2,17 +2,19 @@ package com.jeju.ormicamp.common.dto;
 
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.jeju.ormicamp.common.exception.ErrorCode;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 
 @Getter
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder({"status", "message", "data", "code"})
 public class BaseResponse<T> {
     private final int status;
     private final String message;
     private final T data;
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     private final String code;   // 성공 시 null, 에러 시 ErrorCode.code
 
     private BaseResponse(int status, String message, T data, String code) {

@@ -42,12 +42,16 @@ phases:
       - echo "Updating k8s-manifests/deployment.yml with new image tag..."
       - sed -i "s|image:.*|image:\ $REPOSITORY_URI:$IMAGE_TAG|g" k8s-manifests/deployment.yml
       
-      # GitHub에 변경사항 커밋 (선택사항 - 나중에 설정)
-      # - git config --global user.email "codebuild@aws.com"
-      # - git config --global user.name "AWS CodeBuild"
-      # - git add k8s-manifests/deployment.yml
-      # - git commit -m "Update image to $IMAGE_TAG [skip ci]"
-      # - git push origin main
+      # GitHub에 변경사항 커밋 및 푸시
+      - echo "Configuring git..."
+      - git config --global user.email "codebuild@aws.com"
+      - git config --global user.name "AWS CodeBuild"
+      - git remote set-url origin https://${GITHUB_TOKEN}@github.com/4-in-jeju-fall-in-jeju/be-server.git
+      - echo "Committing changes..."
+      - git add k8s-manifests/deployment.yml
+      - git diff --cached --exit-code || git commit -m "chore: Update image to $IMAGE_TAG [skip ci]"
+      - echo "Pushing to GitHub..."
+      - git push origin HEAD:main || echo "No changes to push"
 
 # 빌드 아티팩트 (선택사항)
 artifacts:

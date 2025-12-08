@@ -9,5 +9,5 @@ RUN chmod +x gradlew
 RUN ./gradlew bootJar
 FROM eclipse-temurin:17-jre-alpine
 COPY --from=build /app/build/libs/*.jar app.jar
-EXPOSE 8080
+EXPOSE 8001
 ENTRYPOINT ["java","-jar","/app.jar"]

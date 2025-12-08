@@ -1,0 +1,57 @@
+version: 0.2
+
+# 환경 변수 설정
+env:
+  variables:
+    AWS_DEFAULT_REGION: "ap-northeast-2"
+    AWS_ACCOUNT_ID: "310688446727"
+    IMAGE_REPO_NAME: "backend-app"
+    IMAGE_TAG: "latest"
+
+# 빌드 단계
+phases:
+  # 빌드 전 준비 단계
+  pre_build:
+    commands:
+      - echo "Logging in to Amazon ECR..."
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:=latest}
+      - echo "Building image with tag $IMAGE_TAG"
+
+  # 실제 빌드 단계
+  build:
+    commands:
+      - echo "Build started on `date`"
+      - echo "Building the Docker image..."
+      - docker build -t $REPOSITORY_URI:latest .
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+
+  # 빌드 후 처리 단계
+  post_build:
+    commands:
+      - echo "Build completed on `date`"
+      - echo "Pushing the Docker images to ECR..."
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - echo "Docker image pushed successfully!"
+      - echo "Image URI = $REPOSITORY_URI:$IMAGE_TAG"
+      
+      # deployment.yml의 이미지 태그를 새 버전으로 업데이트
+      - echo "Updating k8s-manifests/deployment.yml with new image tag..."
+      - sed -i "s|image:.*|image:\ $REPOSITORY_URI:$IMAGE_TAG|g" k8s-manifests/deployment.yml
+      
+      # GitHub에 변경사항 커밋 (선택사항 - 나중에 설정)
+      # - git config --global user.email "codebuild@aws.com"
+      # - git config --global user.name "AWS CodeBuild"
+      # - git add k8s-manifests/deployment.yml
+      # - git commit -m "Update image to $IMAGE_TAG [skip ci]"
+      # - git push origin main
+
+# 빌드 아티팩트 (선택사항)
+artifacts:
+  files:
+    - k8s-manifests/deployment.yml
+    - k8s-manifests/service.yml
+

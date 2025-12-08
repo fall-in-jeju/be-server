@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-app-deployment
+  labels:
+    app: backend-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend-app
+  template:
+    metadata:
+      labels:
+        app: backend-app
+    spec:
+      containers:
+      - name: backend-app-container
+        image: 310688446727.dkr.ecr.ap-northeast-2.amazonaws.com/backend-app:latest  # 이 부분이 변경됩니다.
+        ports:
+        - containerPort: 8080  # 3000 -> 8080으로 변경
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: production # Spring Boot 프로파일 설정
+        - name: SPRING_DATASOURCE_URL # H2 인메모리 DB 설정
+          value: "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1"
+        - name: SPRING_DATASOURCE_USERNAME
+          value: "sa" # H2 기본 사용자 이름
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: "" # H2 기본 비밀번호 (없음)

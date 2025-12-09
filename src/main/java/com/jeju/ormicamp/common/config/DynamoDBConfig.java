@@ -1,4 +1,4 @@
-package com.jeju.ormicamp.infrastructure.config;
+package com.jeju.ormicamp.common.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

@@ -3,10 +3,10 @@ name: Trigger AWS CodeBuild
 on:
   push:
     branches:
-      - main
+      - main  # main 브랜치만 배포
   pull_request:
     branches: 
-      - main
+      - main  # main으로의 PR은 빌드만 (검증용)
     types: [opened, synchronize, reopened]
 
 jobs:

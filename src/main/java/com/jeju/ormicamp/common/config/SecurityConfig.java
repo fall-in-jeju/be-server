@@ -23,6 +23,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/test","/api/test/**").permitAll()
+                        // TODO : 로그인 구현 시 삭제 예정
+                        .requestMatchers("/api/planner/date").permitAll()
                         .anyRequest().authenticated()
                 )
 

@@ -1,0 +1,53 @@
+name: Trigger AWS CodeBuild
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+jobs:
+  trigger-codebuild:
+    name: Trigger CodeBuild
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+      
+      - name: Get branch name
+        id: branch-name
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "branch=${{ github.head_ref }}" >> $GITHUB_OUTPUT
+          else
+            echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Trigger CodeBuild
+        id: codebuild
+        run: |
+          BUILD_ID=$(aws codebuild start-build \
+            --project-name backend-build-project \
+            --source-version ${{ steps.branch-name.outputs.branch }} \
+            --query 'build.id' \
+            --output text)
+          echo "build-id=$BUILD_ID" >> $GITHUB_OUTPUT
+          echo "✅ CodeBuild 트리거 성공: $BUILD_ID"
+      
+      - name: Wait for build completion (optional)
+        run: |
+          echo "⏳ CodeBuild가 진행 중입니다..."
+          echo "🔗 빌드 상태: https://console.aws.amazon.com/codesuite/codebuild/projects/backend-build-project/history"
+          echo "📊 Build ID: ${{ steps.codebuild.outputs.build-id }}"
+

@@ -35,19 +35,29 @@ spec:
           value: "sa" # H2 기본 사용자 이름
         - name: SPRING_DATASOURCE_PASSWORD
           value: "" # H2 기본 비밀번호 (없음)
-        # AWS 자격 증명 (Kubernetes Secret에서 가져옴)
+        # DynamoDB 자격 증명 (Kubernetes Secret에서 가져옴)
         - name: AWS_ACCESS_KEY_ID
           valueFrom:
             secretKeyRef:
-              name: aws-credentials
+              name: dynamodb-credentials
               key: AWS_ACCESS_KEY_ID
         - name: AWS_SECRET_ACCESS_KEY
           valueFrom:
             secretKeyRef:
-              name: aws-credentials
+              name: dynamodb-credentials
               key: AWS_SECRET_ACCESS_KEY
         - name: AWS_REGION
           valueFrom:
             secretKeyRef:
-              name: aws-credentials
+              name: dynamodb-credentials
               key: AWS_REGION
+        - name: AWS_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: dynamodb-credentials
+              key: AWS_ACCESS_KEY_ID
+        - name: AWS_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: dynamodb-credentials
+              key: AWS_SECRET_ACCESS_KEY

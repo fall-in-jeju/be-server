@@ -1,9 +1,12 @@
+server:
+  port: 8001
+
 spring:
   datasource:
     url: jdbc:h2:mem:testdb
     driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    username: ${UserName}
+    password: ${password}
 
   jpa:
     hibernate:
@@ -16,10 +19,16 @@ spring:
     console:
       enabled: true
 
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
+
 aws:
   region: ap-northeast-2
   dynamodb:
     table-name: four-in-jeju
-  # 비밀 파일에 있는 값을 변수로 가져옵니다.
+
   access-key: ${AWS_ACCESS_KEY}
   secret-key: ${AWS_SECRET_KEY}

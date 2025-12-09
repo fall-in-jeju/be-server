@@ -3,10 +3,10 @@ name: Trigger AWS CodeBuild
 on:
   push:
     branches:
-      - main
+      - main  # main 브랜치만 배포
   pull_request:
-    branches:
-      - main
+    branches: 
+      - main  # main으로의 PR은 빌드만 (검증용)
     types: [opened, synchronize, reopened]
 
 jobs:
@@ -45,9 +45,87 @@ jobs:
           echo "build-id=$BUILD_ID" >> $GITHUB_OUTPUT
           echo "✅ CodeBuild 트리거 성공: $BUILD_ID"
       
-      - name: Wait for build completion (optional)
+      - name: Wait for CodeBuild completion
+        id: wait-build
         run: |
-          echo "⏳ CodeBuild가 진행 중입니다..."
-          echo "🔗 빌드 상태: https://console.aws.amazon.com/codesuite/codebuild/projects/backend-build-project/history"
-          echo "📊 Build ID: ${{ steps.codebuild.outputs.build-id }}"
+          BUILD_ID="${{ steps.codebuild.outputs.build-id }}"
+          echo "⏳ CodeBuild 빌드 진행 중..."
+          echo "📊 Build ID: $BUILD_ID"
+          echo "🔗 AWS Console: https://ap-northeast-2.console.aws.amazon.com/codesuite/codebuild/$BUILD_ID/log?region=ap-northeast-2"
+          echo ""
+          
+          # 빌드 완료까지 대기 (최대 15분)
+          MAX_WAIT=900  # 15분
+          ELAPSED=0
+          SLEEP_TIME=10
+          
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            # 빌드 상태 확인
+            BUILD_STATUS=$(aws codebuild batch-get-builds \
+              --ids "$BUILD_ID" \
+              --query 'builds[0].buildStatus' \
+              --output text)
+            
+            CURRENT_PHASE=$(aws codebuild batch-get-builds \
+              --ids "$BUILD_ID" \
+              --query 'builds[0].currentPhase' \
+              --output text)
+            
+            echo "⏱️  $(date +%H:%M:%S) | Status: $BUILD_STATUS | Phase: $CURRENT_PHASE"
+            
+            # 빌드 완료 상태 확인
+            case "$BUILD_STATUS" in
+              "SUCCEEDED")
+                echo ""
+                echo "✅ CodeBuild 빌드 성공!"
+                echo "build-status=SUCCEEDED" >> $GITHUB_OUTPUT
+                exit 0
+                ;;
+              "FAILED"|"FAULT"|"TIMED_OUT"|"STOPPED")
+                echo ""
+                echo "❌ CodeBuild 빌드 실패: $BUILD_STATUS"
+                echo "build-status=$BUILD_STATUS" >> $GITHUB_OUTPUT
+                exit 1
+                ;;
+              "IN_PROGRESS")
+                # 계속 대기
+                sleep $SLEEP_TIME
+                ELAPSED=$((ELAPSED + SLEEP_TIME))
+                ;;
+              *)
+                echo "⚠️  알 수 없는 상태: $BUILD_STATUS"
+                sleep $SLEEP_TIME
+                ELAPSED=$((ELAPSED + SLEEP_TIME))
+                ;;
+            esac
+          done
+          
+          # 타임아웃
+          echo ""
+          echo "⏰ CodeBuild 대기 시간 초과 (15분)"
+          echo "🔗 AWS Console에서 확인: https://ap-northeast-2.console.aws.amazon.com/codesuite/codebuild/$BUILD_ID/log?region=ap-northeast-2"
+          echo "build-status=TIMEOUT" >> $GITHUB_OUTPUT
+          exit 1
+      
+      - name: Build Summary
+        if: always()
+        run: |
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 CodeBuild 빌드 결과 요약"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Build ID: ${{ steps.codebuild.outputs.build-id }}"
+          echo "Status: ${{ steps.wait-build.outputs.build-status }}"
+          echo "Branch: ${{ steps.branch-name.outputs.branch }}"
+          echo ""
+          
+          if [[ "${{ steps.wait-build.outputs.build-status }}" == "SUCCEEDED" ]]; then
+            echo "✅ 빌드 성공!"
+            echo "🚀 ArgoCD가 자동으로 EKS에 배포합니다."
+            echo "⏱️  약 3-5분 후 배포 완료 예상"
+          else
+            echo "❌ 빌드 실패!"
+            echo "🔗 로그 확인: https://ap-northeast-2.console.aws.amazon.com/codesuite/codebuild/${{ steps.codebuild.outputs.build-id }}/log?region=ap-northeast-2"
+          fi
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 

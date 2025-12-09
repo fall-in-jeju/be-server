@@ -15,3 +15,11 @@ spring:
   h2:
     console:
       enabled: true
+
+aws:
+  region: ap-northeast-2
+  dynamodb:
+    table-name: four-in-jeju
+  # 비밀 파일에 있는 값을 변수로 가져옵니다.
+  access-key: ${AWS_ACCESS_KEY}
+  secret-key: ${AWS_SECRET_KEY}

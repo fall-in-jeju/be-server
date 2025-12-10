@@ -1,5 +1,6 @@
 package com.jeju.ormicamp.service.planner;
 
+import com.jeju.ormicamp.common.exception.CustomException;
 import com.jeju.ormicamp.common.exception.ErrorCode;
 import com.jeju.ormicamp.infrastructure.repository.planner.TravelDateRepository;
 import com.jeju.ormicamp.model.domain.TravelDate;
@@ -18,7 +19,7 @@ public class TravelDateService {
 
         if(dto.getEndDate().isBefore(dto.getStartDate())){
             // TODO : 에러 CustomException 도입 시 변경
-            throw new IllegalArgumentException(ErrorCode.UNKNOWN_ERROR.getMessage());
+            throw new CustomException(ErrorCode.BAD_REQUEST);
         }
 
         TravelDate travelDate = TravelDate.builder()
@@ -34,7 +35,7 @@ public class TravelDateService {
 
         // TODO : 에러 가시화
         TravelDate update = travelDateRepository.findById(travelDateId)
-                .orElseThrow(() -> new IllegalStateException(ErrorCode.UNKNOWN_ERROR.getMessage()));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         update.updateDate(dto.getStartDate(), dto.getEndDate());
 

@@ -25,7 +25,10 @@ public enum ErrorCode {
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "METHOD_NOT_ALLOWED", "지원하지 않는 HTTP Method입니다."),
     NOT_ACCEPTABLE(HttpStatus.NOT_ACCEPTABLE, "NOT_ACCEPTABLE", "요청된 리소스를 제공할 수 없습니다."),
     // 500에러 기본
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다.");
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다."),
+
+    // 여기부터 에러 커스텀
+    INVALID_DATE_RANGE(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "시작날짜와 종료날짜를 확인해 주세요");
 
     private final HttpStatus httpStatus;
     private final String code;

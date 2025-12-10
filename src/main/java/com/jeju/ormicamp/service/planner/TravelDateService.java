@@ -15,31 +15,26 @@ public class TravelDateService {
     private final TravelDateRepository travelDateRepository;
 
 
-    public Long saveDate(TravelDateReqDto dto) {
+    public TravelDate saveDate(TravelDateReqDto dto) {
 
-        if(dto.getEndDate().isBefore(dto.getStartDate())){
-            // TODO : 에러 CustomException 도입 시 변경
-            throw new CustomException(ErrorCode.BAD_REQUEST);
+        if(!dto.getStartDate().isBefore(dto.getEndDate())) {
+            throw new CustomException(ErrorCode.INVALID_DATE_RANGE);
         }
 
         TravelDate travelDate = TravelDate.builder()
                 .startDate(dto.getStartDate())
                 .endDate(dto.getEndDate())
                 .build();
-        TravelDate result = travelDateRepository.save(travelDate);
-
-        return result.getId();
+        return travelDateRepository.save(travelDate);
     }
 
-    public void updateDate(Long travelDateId, TravelDateReqDto dto) {
+    public TravelDate updateDate(Long travelDateId, TravelDateReqDto dto) {
 
-        // TODO : 에러 가시화
         TravelDate update = travelDateRepository.findById(travelDateId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         update.updateDate(dto.getStartDate(), dto.getEndDate());
 
-        // TODO : 변경된 TravleDate 값 반환
-
+        return travelDateRepository.save(update);
     }
 }

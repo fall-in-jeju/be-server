@@ -1,5 +1,6 @@
 package com.jeju.ormicamp.service.planner;
 
+import com.jeju.ormicamp.common.exception.CustomException;
 import com.jeju.ormicamp.common.exception.ErrorCode;
 import com.jeju.ormicamp.infrastructure.repository.planner.TravelDateRepository;
 import com.jeju.ormicamp.model.domain.TravelDate;
@@ -14,30 +15,26 @@ public class TravelDateService {
     private final TravelDateRepository travelDateRepository;
 
 
-    public Long saveDate(TravelDateReqDto dto) {
+    public TravelDate saveDate(TravelDateReqDto dto) {
 
-        // TODO : user 예외처리 확인
+        if(!dto.getStartDate().isBefore(dto.getEndDate())) {
+            throw new CustomException(ErrorCode.INVALID_DATE_RANGE);
+        }
 
-        // TODO : endDate > startDate 검증
-        // TODO : 메서드화
         TravelDate travelDate = TravelDate.builder()
                 .startDate(dto.getStartDate())
                 .endDate(dto.getEndDate())
                 .build();
-        TravelDate result = travelDateRepository.save(travelDate);
-
-        return result.getId();
+        return travelDateRepository.save(travelDate);
     }
 
-    public void updateDate(Long travelDateId, TravelDateReqDto dto) {
+    public TravelDate updateDate(Long travelDateId, TravelDateReqDto dto) {
 
-        // TODO : 에러 가시화
         TravelDate update = travelDateRepository.findById(travelDateId)
-                .orElseThrow(() -> new IllegalStateException(ErrorCode.UNKNOWN_ERROR.getMessage()));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         update.updateDate(dto.getStartDate(), dto.getEndDate());
 
-        // TODO : 변경된 TravleDate 값 반환
-
+        return travelDateRepository.save(update);
     }
 }

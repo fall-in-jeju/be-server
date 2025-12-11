@@ -7,7 +7,6 @@ import com.jeju.ormicamp.common.exception.ErrorCode;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-
 @Getter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({"status", "message", "data", "code"})

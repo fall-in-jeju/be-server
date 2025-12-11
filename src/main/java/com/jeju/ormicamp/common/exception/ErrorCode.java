@@ -15,18 +15,23 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
     /*
     GlobalExceptionHandler에서 사용
+    얘네는 ENUM임
      */
-    @Schema(description = "처리되지 않은 서버 오류입니다.")
-    UNKNOWN_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "500", "처리되지 않은 서버 오류입니다."),
+    // 400 에러 기본
+    BAD_REQUEST(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "잘못된 요청입니다."),
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "인증이 필요합니다."),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "FORBIDDEN", "접근 권한이 없습니다."),
+    NOT_FOUND(HttpStatus.NOT_FOUND, "NOT_FOUND", "요청한 리소스를 찾을 수 없습니다."),
+    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "METHOD_NOT_ALLOWED", "지원하지 않는 HTTP Method입니다."),
+    NOT_ACCEPTABLE(HttpStatus.NOT_ACCEPTABLE, "NOT_ACCEPTABLE", "요청된 리소스를 제공할 수 없습니다."),
+    // 500에러 기본
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다."),
 
-    @Schema(description = "비활성화된 계정입니다.")
-    MEMBER_DEACTIVATED(HttpStatus.UNAUTHORIZED, "401", "비활성화된 계정입니다.");
+    // 여기부터 에러 커스텀
+    INVALID_DATE_RANGE(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "시작날짜와 종료날짜를 확인해 주세요");
 
     private final HttpStatus httpStatus;
-    @Schema(description = "에러 코드", example = "UNKNOWN_ERROR_500", implementation = ErrorCode.class)
     private final String code;
-
-    @Schema(description = "사용자 친화적 메시지", example = "처리되지 않은 서버 오류입니다.")
     private final String message;
 
     ErrorCode(HttpStatus httpStatus, String code, String message) {

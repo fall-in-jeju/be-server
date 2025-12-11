@@ -5,11 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.bedrockagentruntime.BedrockAgentRuntimeClient;
+import software.amazon.awssdk.services.bedrockagentruntime.BedrockAgentRuntimeAsyncClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 
@@ -41,17 +39,10 @@ public class AwsProdConfig {
     }
 
     @Bean
-    public BedrockAgentRuntimeClient bedrockClient() {
-        AwsBasicCredentials creds = AwsBasicCredentials.create(
-                properties.getAccessKey(),
-                properties.getSecretKey()
-        );
+    public BedrockAgentRuntimeAsyncClient bedrockAgentRuntimeAsyncClient() {
 
-        return BedrockAgentRuntimeClient.builder()
+        return BedrockAgentRuntimeAsyncClient.builder()
                 .region(Region.of(properties.getBedRockRegion()))
-                .credentialsProvider(StaticCredentialsProvider.create(creds))
                 .build();
     }
-
-
 }

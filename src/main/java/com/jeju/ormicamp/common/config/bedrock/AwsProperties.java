@@ -2,7 +2,6 @@ package com.jeju.ormicamp.common.config.bedrock;
 
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
@@ -16,7 +15,7 @@ public class AwsProperties {
     private String DynamoRegion;
 
     @Value("${aws.bedrock.agent-id}")
-    private String gentId;
+    private String agentId;
 
     @Value("${aws.bedrock.alias-id}")
     private String aliasId;

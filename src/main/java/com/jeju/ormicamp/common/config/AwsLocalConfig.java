@@ -9,7 +9,7 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.bedrockagentruntime.BedrockAgentRuntimeClient;
+import software.amazon.awssdk.services.bedrockagentruntime.BedrockAgentRuntimeAsyncClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 @Configuration
@@ -41,17 +41,15 @@ public class AwsLocalConfig {
     }
 
     @Bean
-    public BedrockAgentRuntimeClient bedrockClient() {
+    public BedrockAgentRuntimeAsyncClient bedrockAgentRuntimeAsyncClient() {
         AwsBasicCredentials creds = AwsBasicCredentials.create(
                 properties.getAccessKey(),
                 properties.getSecretKey()
         );
 
-        return BedrockAgentRuntimeClient.builder()
+        return BedrockAgentRuntimeAsyncClient.builder()
                 .region(Region.of(properties.getBedRockRegion()))
                 .credentialsProvider(StaticCredentialsProvider.create(creds))
                 .build();
     }
-
-
 }

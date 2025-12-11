@@ -46,11 +46,9 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     // amzon
-    implementation platform('software.amazon.awssdk:bom:2.29.0')
-    implementation 'software.amazon.awssdk:dynamodb'
-    implementation 'software.amazon.awssdk:dynamodb-enhanced'
-    implementation "software.amazon.awssdk:bedrockagentruntime"
-    implementation "software.amazon.awssdk:bedrockagent"
+    implementation 'software.amazon.awssdk:dynamodb:2.29.6'
+    implementation 'software.amazon.awssdk:dynamodb-enhanced:2.29.6'
+    implementation "software.amazon.awssdk:bedrockagentruntime:2.30.31"
 
     // 그외
     compileOnly 'org.projectlombok:lombok'

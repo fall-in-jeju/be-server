@@ -4,7 +4,6 @@ import com.jeju.ormicamp.infrastructure.repository.dynamoDB.ChatRepository;
 import com.jeju.ormicamp.model.dynamodb.ChatEntity;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
-import java.util.UUID;
 import java.util.List;
 
 @Service

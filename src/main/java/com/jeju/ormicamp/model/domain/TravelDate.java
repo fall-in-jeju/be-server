@@ -31,6 +31,13 @@ public class TravelDate {
 
     private LocalDateTime updateDate;
 
+
+    /**
+     * 수정한 날짜를 저장
+     * 단, 수정하지 않은 부분은 null 값으로 오기 때문에 저장 x
+     * @param startDate 시작일
+     * @param endDate 종료일
+     */
     public void updateDate(LocalDate startDate, LocalDate endDate) {
 
         if (startDate != null) {

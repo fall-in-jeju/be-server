@@ -21,7 +21,7 @@ public class ChatService {
 
         // 핵심: 여기서 PK/SK 규칙을 적용합니다!
         chat.setPk("SESSION#" + sessionId);
-        chat.setSk("MSG#" + LocalDateTime.now().toString()); // 시간순 정렬
+        chat.setSk("MSG#" + LocalDateTime.now()); // 시간순 정렬
 
         chat.setType("CHAT");
         chat.setRole(role);

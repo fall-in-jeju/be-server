@@ -21,7 +21,7 @@ public class PlannerRepository {
 
     // 테이블 객체 생성
     private DynamoDbTable<ChatEntity> getTable() {
-        return dynamoDbEnhancedClient.table("ChatEntity", TableSchema.fromBean(ChatEntity.class));
+        return dynamoDbEnhancedClient.table("fall-in-jeju", TableSchema.fromBean(ChatEntity.class));
     }
 
     // 1. 플래너 저장 (생성 & 수정 통합 - Upsert)

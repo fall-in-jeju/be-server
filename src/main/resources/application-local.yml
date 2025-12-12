@@ -33,12 +33,16 @@ aws:
   secret-key: ${DYNAMODB_SECRET_KEY}
 
   dynamodb:
-    table-name: ${DYNAMO_TABLE_NAME}
+    table-name: ${DYNAMO_TABEL_NAME}
 
   bedrock:
     agent-id: ${BEDROCK_AGENT_ID}
     alias-id: ${BEDROCK_ALIAS_ID}
     region : ${AGENT_REGION}
+
+cognito:
+  issuer: ${COGNITO_ISSUER}
+  jwks-url: ${COGNITO_JWKS_URL}
 
 server:
   port: 8001

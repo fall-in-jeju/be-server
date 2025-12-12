@@ -1,6 +1,7 @@
 package com.jeju.ormicamp;
 
 import com.jeju.ormicamp.infrastructure.repository.dynamoDB.ChatRepository; // 아까 만든 리포지토리
+import com.jeju.ormicamp.model.dynamodb.ChatResDto;
 import com.jeju.ormicamp.service.dynamodb.ChatService;       // 아까 만든 서비스
 import com.jeju.ormicamp.model.dynamodb.ChatEntity;           // 아까 만든 엔티티
 import org.junit.jupiter.api.DisplayName;
@@ -66,13 +67,13 @@ class DynamoDBTest {
         System.out.println("👀 조회된 목록 개수: " + mySessions.size());
 
         // 4-B. 채팅방 메시지 조회
-        List<ChatEntity> chatHistory = travelService.enterChatRoom(sessionId);
+        List<ChatResDto> chatHistory = travelService.getChatHistory(sessionId);
 
         assertThat(chatHistory).hasSize(2); // 메시지가 2개여야 함
         assertThat(chatHistory.get(0).getContent()).contains("안녕"); // 내용 확인
 
         System.out.println("👀 조회된 채팅 개수: " + chatHistory.size());
-        for (ChatEntity chat : chatHistory) {
+        for (ChatResDto chat : chatHistory) {
             System.out.println("   -> [" + chat.getRole() + "] " + chat.getContent());
         }
 

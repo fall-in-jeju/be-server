@@ -28,12 +28,12 @@ spring:
       - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
 
 aws:
-  region: ap-northeast-2
+  region: ${DYNAMODB_REGION}
   access-key: ${DYNAMODB_ACCESS_KEY}
   secret-key: ${DYNAMODB_SECRET_KEY}
 
   dynamodb:
-    table-name: four-in-jeju
+    table-name: ${DYNAMO_TABLE_NAME}
 
   bedrock:
     agent-id: ${BEDROCK_AGENT_ID}

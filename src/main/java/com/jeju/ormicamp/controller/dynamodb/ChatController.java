@@ -1,6 +1,7 @@
 package com.jeju.ormicamp.controller.dynamodb;
 
-import com.jeju.ormicamp.model.dynamodb.ChatEntity;
+import com.jeju.ormicamp.model.dynamodb.ChatReqDto;
+import com.jeju.ormicamp.model.dynamodb.ChatResDto;
 import com.jeju.ormicamp.service.dynamodb.ChatService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -20,19 +21,19 @@ public class ChatController {
     // 프론트엔드에서 유저가 메시지를 보냈을 때,
     // 혹은 AI API에서 응답을 받았을 때 호출
     @PostMapping("/{sessionId}")
-    public ResponseEntity<String> saveChatMessage(
+    public ResponseEntity<String> saveMessage(
             @PathVariable String sessionId,
-            @RequestBody ChatRequestDto request) {
-
+            @RequestBody ChatReqDto request) { // 1. ReqDto로 받음
+        System.out.println("🚩 [Controller 도착] 요청 받음! sessionId: " + sessionId);
+        // DTO에서 데이터를 꺼내서 서비스로 넘김
         chatService.saveChatMessage(sessionId, request.getRole(), request.getContent());
-        return ResponseEntity.ok("Saved successfully");
+        return ResponseEntity.ok("Saved");
     }
 
-    // --- [API 2] 채팅 내역 조회 ---
-    // 채팅방에 처음 들어왔을 때 호출
     @GetMapping("/{sessionId}")
-    public ResponseEntity<List<ChatEntity>> enterChatRoom(@PathVariable String sessionId) {
-        List<ChatEntity> history = chatService.enterChatRoom(sessionId);
+    public ResponseEntity<List<ChatResDto>> getChatHistory(@PathVariable String sessionId) { // 2. ResDto 리스트로 반환
+
+        List<ChatResDto> history = chatService.getChatHistory(sessionId);
         return ResponseEntity.ok(history);
     }
 

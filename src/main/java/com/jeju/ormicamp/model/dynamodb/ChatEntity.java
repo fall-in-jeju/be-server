@@ -29,9 +29,9 @@ public class ChatEntity {
 
     // 4. 여행 목록(Meta)용 속성
     private String sessionTitle; // "제주 3박 4일 여행"
-    private String startDate;
-    private String endDate;
-    private String capacity;
+    private String startDate; // 여행 시작 날짜 "2025-12-12"
+    private String endDate; // 여행 끝 날짜 "2025-12-15"
+    private String capacity; // 인원 수 "3"
 
 
     // 5. 플래너용 속성 (복잡한 객체 리스트)
@@ -54,13 +54,13 @@ public class ChatEntity {
     // --- 내부 클래스 (장소 정보) ---
     @Getter @Setter @DynamoDbBean
     public static class PlaceItem {
-        private Double seqNo;
-        private String placeName;
-        private String time;
-        private String category;
-        private Double lat;
-        private Double lng;
-        private String address;
-        private String mapId;
+        private Long order; // 여행 목록 순서
+        private String placeName; // 장소 이름
+        private String time; // 방문 시간
+        private String category; // 아이콘 결정용
+        private Double lat; // 위도
+        private Double lng; // 경도
+        private String address; // 주소
+        private String mapId; // 매장 식별자
     }
 }

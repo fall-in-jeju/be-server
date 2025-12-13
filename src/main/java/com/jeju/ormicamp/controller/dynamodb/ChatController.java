@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/chat")
@@ -26,8 +27,13 @@ public class ChatController {
             @RequestBody ChatReqDto request) { // 1. ReqDto로 받음
         System.out.println("🚩 [Controller 도착] 요청 받음! sessionId: " + sessionId);
         // DTO에서 데이터를 꺼내서 서비스로 넘김
+        // [임시 기능] 클라이언트가 "new"라고 보내면 서버가 랜덤 ID 생성
+        if ("new".equalsIgnoreCase(sessionId)) {
+            sessionId = UUID.randomUUID().toString();
+            System.out.println("✨ [새 세션 생성] 임시 ID 발급: " + sessionId);
+        }
         chatService.saveChatMessage(sessionId, request.getRole(), request.getContent());
-        return ResponseEntity.ok("Saved");
+        return ResponseEntity.ok(sessionId);
     }
 
     @GetMapping("/{sessionId}")

@@ -38,9 +38,9 @@ phases:
       - echo "Docker image pushed successfully!"
       - echo "Image URI = $REPOSITORY_URI:$IMAGE_TAG"
       
-      # deployment.yml의 이미지 태그를 새 버전으로 업데이트
-      - echo "Updating k8s-manifests/deployment.yml with new image tag..."
-      - sed -i "s|image:.*|image:\ $REPOSITORY_URI:$IMAGE_TAG|g" k8s-manifests/deployment.yml
+      # deployment.yml (base) 자동 업데이트
+      - echo "Updating k8s-manifests/base/deployment.yml with new image tag..."
+      - sed -i "s|image:.*|image:\ $REPOSITORY_URI:$IMAGE_TAG|g" k8s-manifests/base/deployment.yml
       
       # GitHub에 변경사항 커밋 및 푸시
       - echo "Configuring git..."
@@ -48,7 +48,7 @@ phases:
       - git config --global user.name "AWS CodeBuild"
       - git remote set-url origin https://${GITHUB_TOKEN}@github.com/4-in-jeju-fall-in-jeju/be-server.git
       - echo "Committing changes..."
-      - git add k8s-manifests/deployment.yml
+      - git add k8s-manifests/base/deployment.yml
       - |
         if ! git diff --cached --exit-code > /dev/null; then
           git commit -m "chore: Update image to $IMAGE_TAG [skip ci]"
@@ -67,6 +67,6 @@ phases:
 # 빌드 아티팩트 (선택사항)
 artifacts:
   files:
-    - k8s-manifests/deployment.yml
-    - k8s-manifests/service.yml
+    - k8s-manifests/base/**/*
+    - k8s-manifests/overlays/**/*
 

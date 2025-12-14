@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-app-deployment
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+      - name: backend-app-container
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: dev
+

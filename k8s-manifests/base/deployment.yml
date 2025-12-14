@@ -28,13 +28,13 @@ spec:
             memory: "256Mi"
         env:
         - name: SPRING_PROFILES_ACTIVE
-          value: local # Default to local or dev, overridden by overlay
+          value: local # Default
         - name: SPRING_DATASOURCE_URL
-          value: "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1"
+          value: ${SPRING_DATASOURCE_URL}
         - name: SPRING_DATASOURCE_USERNAME
-          value: "sa"
+          value: ${SPRING_DATASOURCE_USERNAME}
         - name: SPRING_DATASOURCE_PASSWORD
-          value: ""
+          value: ${SPRING_DATASOURCE_PASSWORD}
         - name: AWS_ACCESS_KEY_ID
           valueFrom:
             secretKeyRef:
@@ -60,4 +60,3 @@ spec:
             secretKeyRef:
               name: dynamodb-credentials
               key: AWS_SECRET_ACCESS_KEY
-

@@ -1,0 +1,37 @@
+spring:
+  config:
+    activate:
+      on-profile: production
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate # 운영용: 자동 변경 금지
+    show-sql: false # 운영용: 로그 끔
+    properties:
+      hibernate:
+        format_sql: false
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
+
+aws:
+  region: ${DYNAMODB_REGION}
+  dynamodb:
+    table-name: four-in-jeju # 운영용 테이블
+
+  bedrock:
+    agent-id: ${BEDROCK_AGENT_ID}
+    alias-id: ${BEDROCK_ALIAS_ID}
+    region : ${AGENT_REGION}
+
+server:
+  port: 8001 # ALB에서 8001로 보냄

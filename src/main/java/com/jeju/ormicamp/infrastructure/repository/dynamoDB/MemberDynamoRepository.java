@@ -1,4 +1,4 @@
-package com.jeju.ormicamp.infrastructure.repository;
+package com.jeju.ormicamp.infrastructure.repository.dynamoDB;
 
 import com.jeju.ormicamp.model.dynamodb.MemberDynamoEntity; // 아까 만든 Entity import
 import org.springframework.stereotype.Repository;

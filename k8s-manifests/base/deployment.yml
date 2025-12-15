@@ -70,3 +70,10 @@ spec:
             secretKeyRef:
               name: jwt-secret
               key: JWT_SECRET
+        
+        # Origin Verification Secret (ALB -> Spring 통신용)
+        - name: ORIGIN_VERIFY_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: origin-verify-secret
+              key: ORIGIN_VERIFY_SECRET

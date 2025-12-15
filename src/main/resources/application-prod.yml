@@ -43,5 +43,8 @@ cognito:
   redirect-uri: ${COGNITO_REDIRECT_URI}
   domain: ${COGNITO_DOMAIN}
 
+origin:
+  verify-secret: ${ORIGIN_VERIFY_SECRET}
+
 server:
   port: 8001

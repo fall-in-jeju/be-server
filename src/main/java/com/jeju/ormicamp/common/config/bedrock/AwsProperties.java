@@ -19,11 +19,4 @@ public class AwsProperties {
 
     // @Value("${aws.bedrock.alias-id}")
     // private String aliasId;
-
-    // Key값은 배포 시 Role을 사용한다면
-    // 사용 x
-    @Value("${aws.access-key}")
-    private String accessKey;
-    @Value("${aws.secret-key}")
-    private String secretKey;
 }

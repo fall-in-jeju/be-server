@@ -29,8 +29,6 @@ spring:
 
 aws:
   region: ${DYNAMODB_REGION}
-  access-key: ${DYNAMODB_ACCESS_KEY}
-  secret-key: ${DYNAMODB_SECRET_KEY}
 
   dynamodb:
     table-name: ${DYNAMO_TABEL_NAME}

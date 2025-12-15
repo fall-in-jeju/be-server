@@ -5,8 +5,6 @@ metadata:
   annotations:
     # Dev용 그룹 이름 (ALB 하나를 여러 Ingress가 공유하려면 그룹 설정 필요, 여기선 분리)
     alb.ingress.kubernetes.io/group.name: backend-dev
-    # 인증서 ARN
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:310688446727:certificate/c9a5d3a1-7d63-46f8-9f51-8ff1d664b785
 spec:
   rules:
   - host: dev-api.fall-in-jeju.com

@@ -9,7 +9,7 @@ metadata:
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
     
     # SSL/TLS 설정 (ACM 인증서 사용 - 추후 환경별 patch 가능)
-    # alb.ingress.kubernetes.io/certificate-arn: ...
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:310688446727:certificate/c9a5d3a1-7d63-46f8-9f51-8ff1d664b785
     
     # Health Check 설정
     alb.ingress.kubernetes.io/healthcheck-path: /actuator/health

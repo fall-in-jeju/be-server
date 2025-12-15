@@ -8,17 +8,17 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 public class AwsProperties {
 
-    @Value("${aws.bedrock.region}")
-    private String bedRockRegion;
+    // @Value("${aws.bedrock.region}")
+    // private String bedRockRegion;
 
     @Value("${aws.region}")
     private String DynamoRegion;
 
-    @Value("${aws.bedrock.agent-id}")
-    private String agentId;
+    // @Value("${aws.bedrock.agent-id}")
+    // private String agentId;
 
-    @Value("${aws.bedrock.alias-id}")
-    private String aliasId;
+    // @Value("${aws.bedrock.alias-id}")
+    // private String aliasId;
 
     // Key값은 배포 시 Role을 사용한다면
     // 사용 x

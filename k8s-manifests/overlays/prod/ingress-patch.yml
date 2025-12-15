@@ -5,8 +5,6 @@ metadata:
   annotations:
     # Prod용 그룹 이름
     alb.ingress.kubernetes.io/group.name: backend-prod
-    # 인증서 ARN
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:310688446727:certificate/c9a5d3a1-7d63-46f8-9f51-8ff1d664b785
 spec:
   rules:
   - host: api.fall-in-jeju.com

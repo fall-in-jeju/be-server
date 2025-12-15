@@ -36,9 +36,13 @@ aws:
   # EKS: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY (Kubernetes Secret)
 
 
-# cognito:
-#   issuer: ${COGNITO_ISSUER}
-#   jwks-url: ${COGNITO_JWKS_URL}
+jwt:
+  secret: ${JWT_SECRET}
+
+cognito:
+  user-pool-id: ${COGNITO_USER_POOL_ID}
+  issuer: ${COGNITO_ISSUER}
+  jwks-url: ${COGNITO_JWKS_URL}
 
 server:
   port: 8001

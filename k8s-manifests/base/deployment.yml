@@ -36,8 +36,18 @@ spec:
 
         env:
         # SPRING_PROFILES_ACTIVE는 overlay에서 정의됨 (dev/prod)
+        
         # Cognito 설정 (공개 정보)
+        - name: COGNITO_USER_POOL_ID
+          value: "ap-northeast-2_c52hfkOYE"
         - name: COGNITO_ISSUER
           value: "https://cognito-idp.ap-northeast-2.amazonaws.com/ap-northeast-2_c52hfkOYE"
         - name: COGNITO_JWKS_URL
           value: "https://cognito-idp.ap-northeast-2.amazonaws.com/ap-northeast-2_c52hfkOYE/.well-known/jwks.json"
+        
+        # JWT Secret (민감 정보는 Secret에서 가져옴)
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: JWT_SECRET

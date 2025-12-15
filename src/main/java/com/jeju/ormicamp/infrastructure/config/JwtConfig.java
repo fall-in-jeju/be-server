@@ -12,10 +12,13 @@ public class JwtConfig {
     @Value("${jwt.secret}")
     private String secretKey;
 
+    @Value("${cognito.jwks-url}")
+    private String jwksUrl;
+
     @Bean
     public JwtDecoder cognitoJwtDecoder() {
         return NimbusJwtDecoder
-                .withJwkSetUri("https://cognito-idp.ap-northeast-2.amazonaws.com/${cognito.user-pool-id}/.well-known/jwks.json")
+                .withJwkSetUri(jwksUrl)
                 .build();
     }
 }

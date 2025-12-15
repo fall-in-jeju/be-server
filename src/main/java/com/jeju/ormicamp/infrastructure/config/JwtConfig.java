@@ -9,13 +9,16 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 @Configuration
 public class JwtConfig {
 
-    @Value("${jwt.secret}")
+    @Value("${jwt.secret}")  // Spring 속성 읽기 (application.yml에서 정의)
     private String secretKey;
+
+    @Value("${cognito.jwks-url}")  // Spring 속성 읽기 (application.yml에서 정의)
+    private String jwksUrl;
 
     @Bean
     public JwtDecoder cognitoJwtDecoder() {
         return NimbusJwtDecoder
-                .withJwkSetUri("https://cognito-idp.ap-northeast-2.amazonaws.com/${cognito.user-pool-id}/.well-known/jwks.json")
+                .withJwkSetUri(jwksUrl)
                 .build();
     }
 }

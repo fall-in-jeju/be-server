@@ -4,15 +4,13 @@ spring:
       on-profile: production
 
   datasource:
-    url: ${ENV_DB_URL}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ${ENV_DB_USERNAME}
-    password: ${ENV_DB_PASSWORD}
+    # url, username, password는 환경변수(Secret)에서 자동으로 매핑됨
 
   jpa:
     hibernate:
-      ddl-auto: validate # 운영용: 자동 변경 금지
-    show-sql: false # 운영용: 로그 끔
+      ddl-auto: validate
+    show-sql: false
     properties:
       hibernate:
         format_sql: false
@@ -24,9 +22,9 @@ spring:
       - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
 
 aws:
-  region: ${DYNAMODB_REGION}
+  region: ${AWS_REGION}
   dynamodb:
-    table-name: four-in-jeju # 운영용 테이블
+    table-name: four-in-jeju
 
   bedrock:
     agent-id: ${BEDROCK_AGENT_ID}
@@ -34,4 +32,4 @@ aws:
     region : ${AGENT_REGION}
 
 server:
-  port: 8001 # ALB에서 8001로 보냄
+  port: 8001

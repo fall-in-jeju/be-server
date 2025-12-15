@@ -44,6 +44,25 @@ spec:
           value: "https://cognito-idp.ap-northeast-2.amazonaws.com/ap-northeast-2_c52hfkOYE"
         - name: COGNITO_JWKS_URL
           value: "https://cognito-idp.ap-northeast-2.amazonaws.com/ap-northeast-2_c52hfkOYE/.well-known/jwks.json"
+        - name: COGNITO_DOMAIN
+          value: "https://ap-northeast-2c52hfkoye.auth.ap-northeast-2.amazoncognito.com"
+        
+        # Cognito 민감 정보 (Secret에서 가져옴)
+        - name: COGNITO_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: cognito-secret
+              key: COGNITO_CLIENT_ID
+        - name: COGNITO_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: cognito-secret
+              key: COGNITO_CLIENT_SECRET
+        - name: COGNITO_REDIRECT_URI
+          valueFrom:
+            secretKeyRef:
+              name: cognito-secret
+              key: COGNITO_REDIRECT_URI
         
         # JWT Secret (민감 정보는 Secret에서 가져옴)
         - name: JWT_SECRET

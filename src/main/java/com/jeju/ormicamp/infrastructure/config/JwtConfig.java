@@ -9,10 +9,10 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 @Configuration
 public class JwtConfig {
 
-    @Value("${jwt.secret}")
+    @Value("${jwt.secret}")  // Spring 속성 읽기 (application.yml에서 정의)
     private String secretKey;
 
-    @Value("${cognito.jwks-url}")
+    @Value("${cognito.jwks-url}")  // Spring 속성 읽기 (application.yml에서 정의)
     private String jwksUrl;
 
     @Bean

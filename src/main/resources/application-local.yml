@@ -43,6 +43,10 @@ cognito:
   user-pool-id: ${COGNITO_USER_POOL_ID}
   issuer: ${COGNITO_ISSUER}
   jwks-url: ${COGNITO_JWKS_URL}
+  client-id: ${COGNITO_CLIENT_ID}
+  client-secret: ${COGNITO_CLIENT_SECRET}
+  redirect-uri: ${COGNITO_REDIRECT_URI}
+  domain: ${COGNITO_DOMAIN}
 
 server:
   port: 8001

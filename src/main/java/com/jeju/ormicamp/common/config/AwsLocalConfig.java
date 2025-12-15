@@ -40,16 +40,16 @@ public class AwsLocalConfig {
                 .build();
     }
 
-    @Bean
-    public BedrockAgentRuntimeAsyncClient bedrockAgentRuntimeAsyncClient() {
-        AwsBasicCredentials creds = AwsBasicCredentials.create(
-                properties.getAccessKey(),
-                properties.getSecretKey()
-        );
-
-        return BedrockAgentRuntimeAsyncClient.builder()
-                .region(Region.of(properties.getBedRockRegion()))
-                .credentialsProvider(StaticCredentialsProvider.create(creds))
-                .build();
-    }
+//    @Bean
+//    public BedrockAgentRuntimeAsyncClient bedrockAgentRuntimeAsyncClient() {
+//        AwsBasicCredentials creds = AwsBasicCredentials.create(
+//                properties.getAccessKey(),
+//                properties.getSecretKey()
+//        );
+//
+//        return BedrockAgentRuntimeAsyncClient.builder()
+//                .region(Region.of(properties.getBedRockRegion()))
+//                .credentialsProvider(StaticCredentialsProvider.create(creds))
+//                .build();
+//    }
 }

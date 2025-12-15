@@ -4,10 +4,10 @@ spring:
       on-profile: production
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL}
+    url: ${ENV_DB_URL}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    username: ${ENV_DB_USERNAME}
+    password: ${ENV_DB_PASSWORD}
 
   jpa:
     hibernate:

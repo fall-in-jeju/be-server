@@ -31,5 +31,13 @@ aws:
 #    alias-id: ${BEDROCK_ALIAS_ID}
 #    region : ${AGENT_REGION}
 
+jwt:
+  secret: ${JWT_SECRET}
+
+cognito:
+  user-pool-id: ${COGNITO_USER_POOL_ID}
+  issuer: ${COGNITO_ISSUER}
+  jwks-url: ${COGNITO_JWKS_URL}
+
 server:
   port: 8001

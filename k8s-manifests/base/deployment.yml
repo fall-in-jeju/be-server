@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: backend-app-container
-        image: 310688446727.dkr.ecr.ap-northeast-2.amazonaws.com/backend-app:e80a080
+        image: 310688446727.dkr.ecr.ap-northeast-2.amazonaws.com/backend-app:c533560
         ports:
         - containerPort: 8001
         resources:
@@ -36,8 +36,6 @@ spec:
 
         env:
         # SPRING_PROFILES_ACTIVE는 overlay에서 정의됨 (dev/prod)
-        - name: SERVER_PORT
-          value: "8001"
         - name: SERVER_PORT
           value: "8001"
         

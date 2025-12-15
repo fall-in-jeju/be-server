@@ -36,6 +36,10 @@ spec:
 
         env:
         # SPRING_PROFILES_ACTIVE는 overlay에서 정의됨 (dev/prod)
+        - name: SERVER_PORT
+          value: "8001"
+        - name: SERVER_PORT
+          value: "8001"
         
         # Cognito 설정 (공개 정보)
         - name: COGNITO_USER_POOL_ID

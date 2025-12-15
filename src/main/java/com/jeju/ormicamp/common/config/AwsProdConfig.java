@@ -38,11 +38,11 @@ public class AwsProdConfig {
                 .build();
     }
 
-    @Bean
-    public BedrockAgentRuntimeAsyncClient bedrockAgentRuntimeAsyncClient() {
+    // @Bean
+    // public BedrockAgentRuntimeAsyncClient bedrockAgentRuntimeAsyncClient() {
 
-        return BedrockAgentRuntimeAsyncClient.builder()
-                .region(Region.of(properties.getBedRockRegion()))
-                .build();
-    }
+    //     return BedrockAgentRuntimeAsyncClient.builder()
+    //             .region(Region.of(properties.getBedRockRegion()))
+    //             .build();
+    // }
 }

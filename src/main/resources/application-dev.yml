@@ -26,10 +26,10 @@ aws:
   dynamodb:
     table-name: four-in-jeju-dev
 
-  bedrock:
-    agent-id: ${BEDROCK_AGENT_ID}
-    alias-id: ${BEDROCK_ALIAS_ID}
-    region : ${AGENT_REGION}
+#  bedrock:
+#    agent-id: ${BEDROCK_AGENT_ID}
+#    alias-id: ${BEDROCK_ALIAS_ID}
+#    region : ${AGENT_REGION}
 
 server:
   port: 8001

@@ -19,4 +19,5 @@ public class AwsProperties {
 
     // @Value("${aws.bedrock.alias-id}")
     // private String aliasId;
+
 }

@@ -14,7 +14,7 @@ import java.util.concurrent.CompletableFuture;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Slf4j
-@Service
+//@Service
 @RequiredArgsConstructor
 public class BedRockAgentService {
 

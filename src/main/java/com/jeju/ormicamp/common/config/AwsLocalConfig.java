@@ -14,7 +14,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 @Configuration
 // 해당 어노테이션으로 개발환경과 배포 Config 구분
-@Profile("local")
+//@Profile("local")
 @RequiredArgsConstructor
 public class AwsLocalConfig {
 
@@ -22,7 +22,9 @@ public class AwsLocalConfig {
 
     @Bean
     public DynamoDbClient dynamoDbClient() {
+
         AwsBasicCredentials creds = AwsBasicCredentials.create(
+
                 properties.getAccessKey(),
                 properties.getSecretKey()
         );
@@ -40,8 +42,8 @@ public class AwsLocalConfig {
                 .build();
     }
 
-    @Bean
-    public BedrockAgentRuntimeAsyncClient bedrockAgentRuntimeAsyncClient() {
+    //@Bean
+    /*public BedrockAgentRuntimeAsyncClient bedrockAgentRuntimeAsyncClient() {
         AwsBasicCredentials creds = AwsBasicCredentials.create(
                 properties.getAccessKey(),
                 properties.getSecretKey()
@@ -51,5 +53,5 @@ public class AwsLocalConfig {
                 .region(Region.of(properties.getBedRockRegion()))
                 .credentialsProvider(StaticCredentialsProvider.create(creds))
                 .build();
-    }
+    }*/
 }

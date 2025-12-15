@@ -29,9 +29,11 @@ spring:
 
 aws:
   region: ${DYNAMODB_REGION}
-
   dynamodb:
     table-name: ${DYNAMO_TABEL_NAME}
+  # access-key, secret-key는 DefaultCredentialsProvider가 자동으로 환경변수에서 찾음
+  # Local: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY (.env 파일)
+  # EKS: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY (Kubernetes Secret)
 
 
 # cognito:

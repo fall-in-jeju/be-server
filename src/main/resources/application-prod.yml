@@ -21,12 +21,10 @@ spring:
   #     - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
   #     - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
 
-
 aws:
   region: ${AWS_REGION}
   dynamodb:
     table-name: four-in-jeju
-
 #  bedrock:
 #    agent-id: ${BEDROCK_AGENT_ID}
 #    alias-id: ${BEDROCK_ALIAS_ID}

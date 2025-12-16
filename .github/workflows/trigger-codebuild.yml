@@ -18,7 +18,7 @@ jobs:
       CODEBUILD_PROJECT_NAME: "backend-app-build"
       MANIFEST_REPO: "4-in-jeju-fall-in-jeju/be-manifest"
       MANIFEST_BRANCH: "main"
-      MANIFEST_PATH: "overlays/prod/deployment.yaml"
+      MANIFEST_PATH: "k8s-manifests/overlays/prod/deployment-patch.yml"
 
     steps:
       # 0) app repo checkout (sha 확보용)

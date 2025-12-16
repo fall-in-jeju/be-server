@@ -15,11 +15,12 @@ spring:
       hibernate:
         format_sql: false
 
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
-      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
-      - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
+  # autoconfigure:
+  #   exclude:
+  #     - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+  #     - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+  #     - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
+
 
 aws:
   region: ${AWS_REGION}
@@ -54,8 +55,5 @@ management:
   endpoint:
     health:
       show-details: always # 상세 정보 항상 노출
-    health:
-      redis:
-        enabled: false
 server:
   port: 8001

@@ -3,7 +3,6 @@ package com.jeju.ormicamp.service.Bedrock;
 import com.jeju.ormicamp.common.config.bedrock.AwsProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.core.async.SdkPublisher;
 import software.amazon.awssdk.services.bedrockagentruntime.BedrockAgentRuntimeAsyncClient;
@@ -72,6 +71,7 @@ public class BedRockAgentService {
                 resultFuture.complete(finalText.toString());
             }
         };
+        //TODO : 프론트받는 쪽에서도 sub해야함
 
         agentClient.invokeAgent(request, handler);
         return resultFuture;

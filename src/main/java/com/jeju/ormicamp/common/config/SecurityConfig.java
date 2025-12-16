@@ -16,16 +16,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final JWTUtil jwtUtil;
-    private final OriginVerifyFilter originVerifyFilter;
-    private final UserService userService;
-
-    public SecurityConfig(JWTUtil jwtUtil, OriginVerifyFilter originVerifyFilter, UserService userService) {
-        this.jwtUtil = jwtUtil;
-        this.originVerifyFilter = originVerifyFilter;
-        this.userService = userService;
-    }
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
@@ -37,17 +27,7 @@ public class SecurityConfig {
                         -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/api/test","/api/test/**").permitAll()
-                        .requestMatchers("/actuator/**").permitAll() // Health Check 엔드포인트 허용
-                        // TODO : 로그인 구현 시 삭제 예정
-                        .requestMatchers("/api/planner/date","/api/planner/update/**").permitAll()
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(originVerifyFilter, UsernamePasswordAuthenticationFilter.class) // X-Origin-Verify 필터 추가
-                .addFilterBefore(
-                        new JwtAuthorizationFilter(jwtUtil,userService),
-                        UsernamePasswordAuthenticationFilter.class
+                        .anyRequest().permitAll()   // ⭐ 전부 허용
                 );
         return http.build();
     }

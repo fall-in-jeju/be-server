@@ -1,0 +1,37 @@
+name: Reset dev after squash merge
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+
+jobs:
+  reset-dev:
+    # PR이 실제로 merge됐고, base가 main인 경우만 실행
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reset dev to main (force)
+        run: |
+          set -e
+          git fetch origin
+
+          # dev 브랜치가 원격에 존재하는지 확인
+          if ! git show-ref --verify --quiet refs/remotes/origin/dev; then
+            echo "origin/dev does not exist. Create dev branch first."
+            exit 1
+          fi
+
+          git checkout dev
+          git reset --hard origin/main
+          git push -f origin dev

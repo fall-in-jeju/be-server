@@ -27,7 +27,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     public JwtAuthorizationFilter(JWTUtil jwtUtil,UserService userService) {
         this.jwtUtil = jwtUtil;
-        this.userService = userSerive;
+        this.userService = userService;
     }
 
     @Override

@@ -1,11 +1,16 @@
 package com.jeju.ormicamp.common.jwt;
 
+import com.auth0.jwt.interfaces.DecodedJWT;
+import com.jeju.ormicamp.common.customUserDetail.UserPrincipal;
 import com.jeju.ormicamp.common.jwt.util.JWTUtil;
+import com.jeju.ormicamp.model.domain.User;
+import com.jeju.ormicamp.service.user.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -18,9 +23,11 @@ import java.util.List;
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     private final JWTUtil jwtUtil;
+    private final UserService userService;
 
-    public JwtAuthorizationFilter(JWTUtil jwtUtil) {
+    public JwtAuthorizationFilter(JWTUtil jwtUtil,UserService userService) {
         this.jwtUtil = jwtUtil;
+        this.userService = userService;
     }
 
     @Override
@@ -40,13 +47,24 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         String token = header.substring(7);
 
         try {
-            String userId = jwtUtil.getUserId(token);
+            DecodedJWT jwt = jwtUtil.verify(token);
+
+            String sub = jwtUtil.getSub(jwt);
+            String email = jwtUtil.getEmail(jwt);
+
+            User user = userService.getOrCreateUser(sub, email);
+
+            UserPrincipal principal = new UserPrincipal(
+                    user.getId(),
+                    user.getCognitoSub(),
+                    user.getRole()
+            );
 
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                            userId,
+                            principal,
                             null,
-                            List.of()
+                            List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
                     );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);

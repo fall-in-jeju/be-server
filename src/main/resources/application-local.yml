@@ -4,10 +4,10 @@ spring:
       on-profile: local
 
   datasource:
-    url: jdbc:mariadb://localhost:3306/jeju_db
-    username: jeju
-    password: 1234
-    driver-class-name: org.mariadb.jdbc.Driver
+    url: ${DATASOURCE_URL_LOCAL}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${USERNAME_LOCAL}
+    password: ${PASSWORD_LOCAL}
 
   jpa:
     hibernate:

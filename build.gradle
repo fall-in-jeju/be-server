@@ -37,8 +37,8 @@ dependencies {
 
     // Spring DB
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-    implementation 'org.springframework.session:spring-session-data-redis'
+    //implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    //implementation 'org.springframework.session:spring-session-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
     implementation 'com.mysql:mysql-connector-j:8.3.0'
 

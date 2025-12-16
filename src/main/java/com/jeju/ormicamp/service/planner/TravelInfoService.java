@@ -2,39 +2,39 @@ package com.jeju.ormicamp.service.planner;
 
 import com.jeju.ormicamp.common.exception.CustomException;
 import com.jeju.ormicamp.common.exception.ErrorCode;
-import com.jeju.ormicamp.infrastructure.repository.planner.TravelDateRepository;
-import com.jeju.ormicamp.model.domain.TravelDate;
+import com.jeju.ormicamp.infrastructure.repository.planner.TravelInfoRepository;
+import com.jeju.ormicamp.model.domain.TravelInfo;
 import com.jeju.ormicamp.model.dto.planner.TravelDateReqDto;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
-public class TravelDateService {
+public class TravelInfoService {
 
-    private final TravelDateRepository travelDateRepository;
+    private final TravelInfoRepository travelInfoRepository;
 
 
-    public TravelDate saveDate(TravelDateReqDto dto) {
+    public TravelInfo saveDate(TravelDateReqDto dto) {
 
         if(!dto.getStartDate().isBefore(dto.getEndDate())) {
             throw new CustomException(ErrorCode.INVALID_DATE_RANGE);
         }
 
-        TravelDate travelDate = TravelDate.builder()
+        TravelInfo travelInfo = TravelInfo.builder()
                 .startDate(dto.getStartDate())
                 .endDate(dto.getEndDate())
                 .build();
-        return travelDateRepository.save(travelDate);
+        return travelInfoRepository.save(travelInfo);
     }
 
-    public TravelDate updateDate(Long travelDateId, TravelDateReqDto dto) {
+    public TravelInfo updateDate(Long travelDateId, TravelDateReqDto dto) {
 
-        TravelDate update = travelDateRepository.findById(travelDateId)
+        TravelInfo update = travelInfoRepository.findById(travelDateId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         update.updateDate(dto.getStartDate(), dto.getEndDate());
 
-        return travelDateRepository.save(update);
+        return travelInfoRepository.save(update);
     }
 }

@@ -4,10 +4,10 @@ spring:
       on-profile: local
 
   datasource:
-    url: ${DATASOURCE_URL}
+    url: ${DATASOURCE_URL_LOCAL}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ${USERNAME}
-    password: ${PASSWORD}
+    username: ${USERNAME_LOCAL}
+    password: ${PASSWORD_LOCAL}
 
   jpa:
     hibernate:

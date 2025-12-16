@@ -1,7 +1,6 @@
 package com.jeju.ormicamp.service.user;
 
 import com.jeju.ormicamp.model.dto.user.CognitoTokenResponse;
-import com.jeju.ormicamp.model.dto.user.CognitoUserInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -29,35 +28,28 @@ public class CognitoAuthService {
     private String cognitoDomain;
 
     private final RestClient restClient = RestClient.create();
-    private final JwtDecoder jwtDecoder;
 
     // 1) Cognito Authorization Code → Token 교환
     public CognitoTokenResponse exchangeCodeForTokens(String code) {
 
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("grant_type", "authorization_code");
-        form.add("client_id", clientId);
-        form.add("client_secret", clientSecret);
-        form.add("redirect_uri", redirectUri);
-        form.add("code", code);
+        try{
+            MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+            form.add("grant_type", "authorization_code");
+            form.add("client_id", clientId);
+            form.add("client_secret", clientSecret);
+            form.add("redirect_uri", redirectUri);
+            form.add("code", code);
 
-        return restClient.post()
-                .uri(cognitoDomain + "/oauth2/token")
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(form)
-                .retrieve()
-                .body(CognitoTokenResponse.class);
-    }
-
-    // 2) ID Token → 검증 + sub, email, name 추출
-    public CognitoUserInfo decodeIdToken(String idToken) {
-        Jwt jwt = jwtDecoder.decode(idToken);
-
-        String sub = jwt.getSubject();
-        String email = jwt.getClaims().get("email").toString();
-        String name = jwt.getClaims().get("name").toString();
-
-        return new CognitoUserInfo(sub, email, name);
+            return restClient.post()
+                    .uri(cognitoDomain + "/oauth2/token")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(form)
+                    .retrieve()
+                    .body(CognitoTokenResponse.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
 }

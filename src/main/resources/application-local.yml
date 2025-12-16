@@ -35,6 +35,10 @@ aws:
   # Local: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY (.env 파일)
   # EKS: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY (Kubernetes Secret)
 
+management:
+  health:
+    redis:
+      enabled: false
 
 jwt:
   secret: ${JWT_SECRET}

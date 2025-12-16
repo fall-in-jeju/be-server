@@ -31,6 +31,11 @@ aws:
 #    alias-id: ${BEDROCK_ALIAS_ID}
 #    region : ${AGENT_REGION}
 
+management:
+  health:
+    redis:
+      enabled: false
+
 jwt:
   secret: ${JWT_SECRET}
 

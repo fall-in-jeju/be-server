@@ -1,42 +1,61 @@
 spring:
   config:
     activate:
-      on-profile: prod
+      on-profile: production
 
   datasource:
-    url: ${DATASOURCE_URL}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ${USERNAME}
-    password: ${PASSWORD}
+    # url, username, password는 환경변수(Secret)에서 자동으로 매핑됨
 
   jpa:
     hibernate:
-      ddl-auto: create
-    show-sql: true
+      ddl-auto: validate
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
 
-  h2:
-    console:
-      enabled: true
-
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
-      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
-      - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
+  # autoconfigure:
+  #   exclude:
+  #     - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+  #     - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+  #     - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
 
 aws:
-  region: ${DYNAMODB_REGION}
-
+  region: ${AWS_REGION}
   dynamodb:
     table-name: four-in-jeju
 
-  bedrock:
-    agent-id: ${BEDROCK_AGENT_ID}
-    alias-id: ${BEDROCK_ALIAS_ID}
-    region : ${AGENT_REGION}
+#  bedrock:
+#    agent-id: ${BEDROCK_AGENT_ID}
+#    alias-id: ${BEDROCK_ALIAS_ID}
+#    region : ${AGENT_REGION}
 
+jwt:
+  secret: ${JWT_SECRET}
+
+cognito:
+  user-pool-id: ${COGNITO_USER_POOL_ID}
+  issuer: ${COGNITO_ISSUER}
+  jwks-url: ${COGNITO_JWKS_URL}
+  client-id: ${COGNITO_CLIENT_ID}
+  client-secret: ${COGNITO_CLIENT_SECRET}
+  redirect-uri: ${COGNITO_REDIRECT_URI}
+  domain: ${COGNITO_DOMAIN}
+
+origin:
+  verify-secret: ${ORIGIN_VERIFY_SECRET}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus # health 엔드포인트 노출
+  endpoint:
+    health:
+      show-details: always # 상세 정보 항상 노출
+    health:
+      redis:
+        enabled: false
 server:
-  port: 8002
+  port: 8001

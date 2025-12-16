@@ -28,7 +28,17 @@ public enum ErrorCode {
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다."),
 
     // 여기부터 에러 커스텀
-    INVALID_DATE_RANGE(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "시작날짜와 종료날짜를 확인해 주세요");
+    // Date 도메인
+    INVALID_DATE_RANGE(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "시작날짜와 종료날짜를 확인해 주세요"),
+
+    // Chat 도메인
+    CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT_NOT_FOUND", "채팅방을 찾을 수 없습니다."),
+    CHAT_MESSAGE_EMPTY(HttpStatus.BAD_REQUEST, "CHAT_MSG_EMPTY", "메시지 내용은 비어있을 수 없습니다."),
+    CHAT_SESSION_MISSING(HttpStatus.BAD_REQUEST, "CHAT_SESSION_MISSING", "세션 ID가 누락되었습니다."),
+
+    // Planner 도메인
+    PLAN_NOT_FOUND(HttpStatus.NOT_FOUND, "PLAN_NOT_FOUND", "해당 날짜의 여행 일정을 찾을 수 없습니다."),
+    PLAN_SESSION_MISSING(HttpStatus.BAD_REQUEST, "PLAN_SESSION_MISSING", "세션 ID가 누락되었습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

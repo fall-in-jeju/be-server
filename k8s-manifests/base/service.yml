@@ -7,8 +7,9 @@ metadata:
 spec:
   selector:
     app: backend-app
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - protocol: TCP
-             port: 80
-             targetPort: 8001
+      port: 80
+      targetPort: 8001
+

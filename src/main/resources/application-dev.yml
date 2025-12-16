@@ -1,25 +1,19 @@
 spring:
   config:
     activate:
-      on-profile: local
+      on-profile: dev
 
   datasource:
-    url: ${DATASOURCE_URL_LOCAL}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ${USERNAME_LOCAL}
-    password: ${PASSWORD_LOCAL}
+    # url, username, password는 환경변수(Secret)에서 자동으로 매핑됨 (Spring Boot Convention)
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         format_sql: true
-
-  h2:
-    console:
-      enabled: true
 
   # autoconfigure:
   #   exclude:
@@ -28,13 +22,14 @@ spring:
   #     - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
 
 aws:
-  region: ${DYNAMODB_REGION}
+  region: ${AWS_REGION} # DynamoDB Secret에서 주입됨
   dynamodb:
-    table-name: ${DYNAMO_TABEL_NAME}
-  # access-key, secret-key는 DefaultCredentialsProvider가 자동으로 환경변수에서 찾음
-  # Local: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY (.env 파일)
-  # EKS: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY (Kubernetes Secret)
+    table-name: four-in-jeju-dev
 
+#  bedrock:
+#    agent-id: ${BEDROCK_AGENT_ID}
+#    alias-id: ${BEDROCK_ALIAS_ID}
+#    region : ${AGENT_REGION}
 
 jwt:
   secret: ${JWT_SECRET}

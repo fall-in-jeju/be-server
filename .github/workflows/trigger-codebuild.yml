@@ -1,120 +1,131 @@
-name: Build & Deploy (GitOps)
+name: Trigger AWS CodeBuild
 
 on:
   push:
-    branches: [ "main" ]
-
-permissions:
-  contents: read
+    branches:
+      - main  # main 브랜치만 배포
+  pull_request:
+    branches: 
+      - main  # main으로의 PR은 빌드만 (검증용)
+    types: [opened, synchronize, reopened]
 
 jobs:
-  build-and-deploy:
+  trigger-codebuild:
+    name: Trigger CodeBuild
     runs-on: ubuntu-latest
-
-    env:
-      AWS_REGION: ap-northeast-2
-      AWS_ACCOUNT_ID: "310688446727"
-      IMAGE_REPO_NAME: "backend-app"
-      CODEBUILD_PROJECT_NAME: "backend-app-build"
-      MANIFEST_REPO: "4-in-jeju-fall-in-jeju/be-manifest"
-      MANIFEST_BRANCH: "main"
-      MANIFEST_PATH: "overlays/prod/deployment.yaml"
-
+    
     steps:
-      # 0) app repo checkout (sha 확보용)
-      - name: Checkout app repo
+      - name: Checkout code
         uses: actions/checkout@v4
-
-      # 1) AWS 인증
+      
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      # 2) 사용할 image tag 계산 (CodeBuild와 동일 기준: commit sha 7자리)
-      - name: Compute image tag
-        id: vars
+          aws-region: ap-northeast-2
+      
+      - name: Get branch name
+        id: branch-name
         run: |
-          SHORT_SHA="${GITHUB_SHA::7}"
-          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_OUTPUT
-          echo "REPO_URI=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO_NAME}" >> $GITHUB_OUTPUT
-
-      # 3) CodeBuild 트리거 (source-version에 전체 sha 전달)
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "branch=${{ github.head_ref }}" >> $GITHUB_OUTPUT
+          else
+            echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
+          fi
+      
       - name: Trigger CodeBuild
-        id: start_build
+        id: codebuild
         run: |
           BUILD_ID=$(aws codebuild start-build \
-            --project-name "${CODEBUILD_PROJECT_NAME}" \
-            --source-version "${GITHUB_SHA}" \
-            --query 'build.id' --output text)
-          echo "BUILD_ID=$BUILD_ID" >> $GITHUB_OUTPUT
-          echo "Started CodeBuild: $BUILD_ID"
-
-      # 4) CodeBuild 완료 대기 (필수)
-      - name: Wait for CodeBuild to finish
+            --project-name backend-build-project \
+            --source-version ${{ steps.branch-name.outputs.branch }} \
+            --query 'build.id' \
+            --output text)
+          echo "build-id=$BUILD_ID" >> $GITHUB_OUTPUT
+          echo "✅ CodeBuild 트리거 성공: $BUILD_ID"
+      
+      - name: Wait for CodeBuild completion
+        id: wait-build
         run: |
-          BUILD_ID="${{ steps.start_build.outputs.BUILD_ID }}"
-          echo "Waiting for CodeBuild: $BUILD_ID"
-
-          while true; do
-            STATUS=$(aws codebuild batch-get-builds \
+          BUILD_ID="${{ steps.codebuild.outputs.build-id }}"
+          echo "⏳ CodeBuild 빌드 진행 중..."
+          echo "📊 Build ID: $BUILD_ID"
+          echo "🔗 AWS Console: https://ap-northeast-2.console.aws.amazon.com/codesuite/codebuild/$BUILD_ID/log?region=ap-northeast-2"
+          echo ""
+          
+          # 빌드 완료까지 대기 (최대 15분)
+          MAX_WAIT=900  # 15분
+          ELAPSED=0
+          SLEEP_TIME=10
+          
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            # 빌드 상태 확인
+            BUILD_STATUS=$(aws codebuild batch-get-builds \
               --ids "$BUILD_ID" \
               --query 'builds[0].buildStatus' \
               --output text)
-
-            echo "Status: $STATUS"
-
-            if [ "$STATUS" = "SUCCEEDED" ]; then
-              break
-            fi
-
-            if [ "$STATUS" = "FAILED" ] || [ "$STATUS" = "FAULT" ] || [ "$STATUS" = "STOPPED" ] || [ "$STATUS" = "TIMED_OUT" ]; then
-              echo "CodeBuild failed with status: $STATUS"
-              exit 1
-            fi
-
-            sleep 15
+            
+            CURRENT_PHASE=$(aws codebuild batch-get-builds \
+              --ids "$BUILD_ID" \
+              --query 'builds[0].currentPhase' \
+              --output text)
+            
+            echo "⏱️  $(date +%H:%M:%S) | Status: $BUILD_STATUS | Phase: $CURRENT_PHASE"
+            
+            # 빌드 완료 상태 확인
+            case "$BUILD_STATUS" in
+              "SUCCEEDED")
+                echo ""
+                echo "✅ CodeBuild 빌드 성공!"
+                echo "build-status=SUCCEEDED" >> $GITHUB_OUTPUT
+                exit 0
+                ;;
+              "FAILED"|"FAULT"|"TIMED_OUT"|"STOPPED")
+                echo ""
+                echo "❌ CodeBuild 빌드 실패: $BUILD_STATUS"
+                echo "build-status=$BUILD_STATUS" >> $GITHUB_OUTPUT
+                exit 1
+                ;;
+              "IN_PROGRESS")
+                # 계속 대기
+                sleep $SLEEP_TIME
+                ELAPSED=$((ELAPSED + SLEEP_TIME))
+                ;;
+              *)
+                echo "⚠️  알 수 없는 상태: $BUILD_STATUS"
+                sleep $SLEEP_TIME
+                ELAPSED=$((ELAPSED + SLEEP_TIME))
+                ;;
+            esac
           done
-
-      # 5) yq 설치 (필수)
-      - name: Install yq
+          
+          # 타임아웃
+          echo ""
+          echo "⏰ CodeBuild 대기 시간 초과 (15분)"
+          echo "🔗 AWS Console에서 확인: https://ap-northeast-2.console.aws.amazon.com/codesuite/codebuild/$BUILD_ID/log?region=ap-northeast-2"
+          echo "build-status=TIMEOUT" >> $GITHUB_OUTPUT
+          exit 1
+      
+      - name: Build Summary
+        if: always()
         run: |
-          sudo wget -q https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
-          sudo chmod +x /usr/bin/yq
-          yq --version
-
-      # 6) manifest repo checkout (여기부터 “배포 상태 기록”)
-      - name: Checkout manifest repo
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.MANIFEST_REPO }}
-          ref: ${{ env.MANIFEST_BRANCH }}
-          token: ${{ secrets.MANIFEST_REPO_TOKEN }}
-          path: manifest
-
-      # 7) deployment image tag 업데이트
-      - name: Update image tag in manifest
-        working-directory: manifest
-        run: |
-          IMAGE="${{ steps.vars.outputs.REPO_URI }}:${{ steps.vars.outputs.SHORT_SHA }}"
-          echo "Updating image to: $IMAGE"
-          yq e ".spec.template.spec.containers[0].image = \"$IMAGE\"" -i "${MANIFEST_PATH}"
-
-      # 8) 커밋 & 푸시 (변경 없으면 스킵)
-      - name: Commit & push manifest
-        working-directory: manifest
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions@github.com"
-
-          git add "${MANIFEST_PATH}"
-
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
-            exit 0
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 CodeBuild 빌드 결과 요약"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Build ID: ${{ steps.codebuild.outputs.build-id }}"
+          echo "Status: ${{ steps.wait-build.outputs.build-status }}"
+          echo "Branch: ${{ steps.branch-name.outputs.branch }}"
+          echo ""
+          
+          if [[ "${{ steps.wait-build.outputs.build-status }}" == "SUCCEEDED" ]]; then
+            echo "✅ 빌드 성공!"
+            echo "🚀 ArgoCD가 자동으로 EKS에 배포합니다."
+            echo "⏱️  약 3-5분 후 배포 완료 예상"
+          else
+            echo "❌ 빌드 실패!"
+            echo "🔗 로그 확인: https://ap-northeast-2.console.aws.amazon.com/codesuite/codebuild/${{ steps.codebuild.outputs.build-id }}/log?region=ap-northeast-2"
           fi
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-          git commit -m "chore(prod): bump image to ${{ steps.vars.outputs.SHORT_SHA }}"
-          git push origin "${MANIFEST_BRANCH}"

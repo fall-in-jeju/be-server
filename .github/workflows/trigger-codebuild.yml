@@ -16,7 +16,7 @@ jobs:
       AWS_ACCOUNT_ID: "310688446727"
       IMAGE_REPO_NAME: "backend-app"
       CODEBUILD_PROJECT_NAME: "backend-build-project"
-      MANIFEST_REPO: "4-in-jeju-fall-in-jeju/be-manifest"
+      MANIFEST_REPO: "fall-in-jeju/be-manifest"
       MANIFEST_BRANCH: "main"
       MANIFEST_PATH: "overlays/prod/deployment.yaml"
 

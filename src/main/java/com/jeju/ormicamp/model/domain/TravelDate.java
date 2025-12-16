@@ -21,7 +21,7 @@ public class TravelDate {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private Users user;
+    private User user;
 
     private LocalDate startDate;
 

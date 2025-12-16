@@ -27,6 +27,13 @@ public class JWTUtil {
         this.jwkProvider = new UrlJwkProvider(new URL(jwksUrl));
     }
 
+    public String getSub(DecodedJWT jwt) {
+        return jwt.getSubject();
+    }
+    public String getEmail(DecodedJWT jwt) {
+        return jwt.getClaim("email").asString();
+    }
+
     public DecodedJWT verify(String token) {
         DecodedJWT decoded = JWT.decode(token);
 

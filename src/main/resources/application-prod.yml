@@ -54,7 +54,8 @@ management:
   endpoint:
     health:
       show-details: always # 상세 정보 항상 노출
-    redis:
-      enabled: false
+    health:
+      redis:
+        enabled: false
 server:
   port: 8001

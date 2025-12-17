@@ -26,6 +26,7 @@ public class User {
     private String email;
 
     @Enumerated(EnumType.STRING)
+    // 게시판 api 개발 전까지 안씀
     private UserRole role;
 
     @Builder

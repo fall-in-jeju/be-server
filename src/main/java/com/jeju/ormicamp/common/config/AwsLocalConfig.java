@@ -5,13 +5,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider; 
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 @Configuration
-//@Profile("local") // 로컬 프로필 활성화 시 사용
+@Profile("local") // 로컬 프로필 활성화 시 사용
 @RequiredArgsConstructor
 public class AwsLocalConfig {
 
@@ -21,7 +22,14 @@ public class AwsLocalConfig {
     public DynamoDbClient dynamoDbClient() {
         return DynamoDbClient.builder()
                 .region(Region.of(properties.getDynamoRegion()))
-                .credentialsProvider(DefaultCredentialsProvider.create()) 
+                .credentialsProvider(
+                        StaticCredentialsProvider.create(
+                                AwsBasicCredentials.create(
+                                        properties.getAccessKey(),
+                                        properties.getSecretKey()
+                                )
+                        )
+                )
                 .build();
     }
 

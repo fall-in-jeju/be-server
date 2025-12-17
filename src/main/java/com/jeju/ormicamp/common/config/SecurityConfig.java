@@ -3,6 +3,7 @@ package com.jeju.ormicamp.common.config;
 import com.jeju.ormicamp.common.jwt.JwtAuthorizationFilter;
 import com.jeju.ormicamp.common.jwt.util.JWTUtil;
 import com.jeju.ormicamp.service.user.UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -14,7 +15,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JWTUtil jwtUtil;
+    private final UserService userService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -28,7 +33,12 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().permitAll()   // ⭐ 전부 허용
-                );
+                )
+        .addFilterBefore(
+                new JwtAuthorizationFilter(jwtUtil, userService),
+                UsernamePasswordAuthenticationFilter.class
+        );
+
         return http.build();
     }
 }

@@ -11,7 +11,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
@@ -30,7 +30,11 @@ spring:
 aws:
   region: ${DYNAMODB_REGION}
   dynamodb:
-    table-name: ${DYNAMO_TABEL_NAME}
+    table-name: ${DYNAMO_TABLE_NAME}
+    credentials:
+      access-key: ${DYNAMODB_ACCESS_KEY}
+      secret-key: ${DYNAMODB_SECRET_KEY}
+
   # access-key, secret-key는 DefaultCredentialsProvider가 자동으로 환경변수에서 찾음
   # Local: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY (.env 파일)
   # EKS: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY (Kubernetes Secret)
@@ -55,5 +59,10 @@ cognito:
 origin:
   verify-secret: ${ORIGIN_VERIFY_SECRET}
 
+logging:
+  level:
+    root: info
+
 server:
   port: 8001
+

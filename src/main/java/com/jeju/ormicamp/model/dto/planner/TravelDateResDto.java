@@ -1,6 +1,6 @@
 package com.jeju.ormicamp.model.dto.planner;
 
-import com.jeju.ormicamp.model.domain.TravelDate;
+import com.jeju.ormicamp.model.domain.TravelInfo;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,11 +15,11 @@ public class TravelDateResDto {
     private LocalDate startDate;
     private LocalDate endDate;
 
-    public static TravelDateResDto from(TravelDate travelDate) {
+    public static TravelDateResDto from(TravelInfo travelInfo) {
         return new TravelDateResDto(
-                travelDate.getId(),
-                travelDate.getStartDate(),
-                travelDate.getEndDate()
+                travelInfo.getId(),
+                travelInfo.getStartDate(),
+                travelInfo.getEndDate()
         );
     }
 

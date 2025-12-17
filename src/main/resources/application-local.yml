@@ -19,13 +19,13 @@ spring:
 
   h2:
     console:
-      enabled: true
+      enabled: false
 
-  # autoconfigure:
-  #   exclude:
-  #     - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
-  #     - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
-  #     - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
+  autoconfigure:
+     exclude:
+       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+       - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
 
 aws:
   region: ${DYNAMODB_REGION}
@@ -39,6 +39,10 @@ aws:
   # Local: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY (.env 파일)
   # EKS: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY (Kubernetes Secret)
 
+management:
+  health:
+    redis:
+      enabled: false
 
 jwt:
   secret: ${JWT_SECRET}

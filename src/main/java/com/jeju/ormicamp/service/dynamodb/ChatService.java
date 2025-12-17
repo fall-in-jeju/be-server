@@ -11,9 +11,10 @@ import com.jeju.ormicamp.model.domain.ChatEntity;
 import com.jeju.ormicamp.model.domain.TravelInfo;
 import com.jeju.ormicamp.model.dto.dynamodb.ChatReqDto;
 import com.jeju.ormicamp.model.dto.dynamodb.ChatResDto;
-import com.jeju.ormicamp.service.Bedrock.BedRockAgentService;
+//import com.jeju.ormicamp.service.Bedrock.BedRockAgentService;
 import com.jeju.ormicamp.service.Bedrock.MakeJsonService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -22,11 +23,12 @@ import static java.time.LocalTime.now;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ChatService {
 
     private final TravelInfoRepository travelInfoRepository;
     private final ChatDynamoRepository chatRepository;
-    private final BedRockAgentService agentService;
+    //private final BedRockAgentService agentService;
     private final MakeJsonService makeJsonService;
 
     /**
@@ -52,6 +54,9 @@ public class ChatService {
                 .travelInfo(TravelInfoSnapshot.toSnapshot(travelInfo))
                 .build();
 
+        TravelInfoSnapshot response = TravelInfoSnapshot.toSnapshot(travelInfo);
+
+        // TODO : 예외처리
         chatRepository.save(meta);
 
         chatRepository.save(
@@ -70,9 +75,17 @@ public class ChatService {
                 meta.getTravelInfo()
         );
 
-        // 5️⃣ Agent 호출
-        String agentResponse =
-                agentService.sendDataToAgent(conversationId, payload).join();
+        // TODO : agent 연결 시 주석 해제
+        // String agentResponse = agentService.sendDataToAgent(conversationId, payload).join();
+
+        // 테스트용 더미
+        String agentResponse = """
+                [TEST MODE]
+                제주 여행 일정 예시입니다.
+                - 1일차: 성산일출봉
+                - 2일차: 한라산
+                - 3일차: 카페 투어
+                """;
 
         chatRepository.save(
                 ChatEntity.builder()
@@ -90,6 +103,12 @@ public class ChatService {
                 .build();
     }
 
+    /**
+     *
+     * @param req
+     * @param userId
+     * @return
+     */
     public ChatResDto sendMessage(ChatReqDto req, Long userId) {
 
         String conversationId = req.getConversationId();
@@ -112,8 +131,17 @@ public class ChatService {
                 chat.getTravelInfo()
         );
 
-        String agentResponse =
-                agentService.sendDataToAgent(conversationId, payload).join();
+        // TODO : agent 연결 시 주석 해제
+        // String agentResponse = agentService.sendDataToAgent(conversationId, payload).join();
+
+        // 테스트용 더미
+        String agentResponse = """
+                [TEST MODE]
+                제주 여행 일정 예시입니다.
+                - 1일차: 성산일출봉
+                - 2일차: 한라산
+                - 3일차: 카페 투어
+                """;
 
         chatRepository.save(
                 ChatEntity.builder()

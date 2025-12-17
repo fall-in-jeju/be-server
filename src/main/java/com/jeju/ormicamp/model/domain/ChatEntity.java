@@ -18,6 +18,9 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortK
 @DynamoDbBean
 public class ChatEntity {
 
+    private String pk;
+    private String sk;
+
     private String conversationId;
     private String timestamp;
 

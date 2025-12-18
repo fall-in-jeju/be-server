@@ -34,6 +34,8 @@ public class ChatEntity {
 
     private String chatTitle;
 
+    private String planDate;  // 날짜별 플래너용 날짜 (YYYY-MM-DD 형식)
+
     private TravelInfoSnapshot travelInfo;
 
     @DynamoDbPartitionKey
@@ -47,6 +49,9 @@ public class ChatEntity {
     public String getSk() {
         if (type == ChatType.PLAN_META) {
             return "META";
+        }
+        if (type == ChatType.PLAN_DAY && planDate != null) {
+            return type.name() + "#" + planDate + "#" + timestamp;
         }
         return type.name() + "#" + timestamp;
     }

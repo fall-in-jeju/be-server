@@ -13,6 +13,7 @@ import com.jeju.ormicamp.model.dto.dynamodb.ChatConversationResDto;
 import com.jeju.ormicamp.model.dto.dynamodb.ChatMessageResDto;
 import com.jeju.ormicamp.model.dto.dynamodb.ChatReqDto;
 import com.jeju.ormicamp.model.dto.dynamodb.ChatResDto;
+import com.jeju.ormicamp.model.dto.dynamodb.PlanDayResDto;
 //import com.jeju.ormicamp.service.Bedrock.BedRockAgentService;
 import com.jeju.ormicamp.service.Bedrock.MakeJsonService;
 import lombok.RequiredArgsConstructor;
@@ -49,14 +50,13 @@ public class ChatService {
                 .findByUserId(userId).orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         // 대화방 메타 데이터 초기 데이터 조회용
+        // 초기 title은 임시값, 나중에 Agent가 생성한 title로 업데이트됨
         ChatEntity meta = ChatEntity.builder()
                 .conversationId(conversationId)
                 .type(ChatType.PLAN_META)
-                .chatTitle(req.getContent())
+                .chatTitle("새 여행 계획")  // 임시 제목, Agent 응답으로 업데이트됨
                 .travelInfo(TravelInfoSnapshot.toSnapshot(travelInfo))
                 .build();
-
-        TravelInfoSnapshot response = TravelInfoSnapshot.toSnapshot(travelInfo);
 
         // TODO : 예외처리
         chatRepository.save(meta);
@@ -82,20 +82,35 @@ public class ChatService {
 
         // 테스트용 더미
         String agentResponse = """
-                {"content": "[TEST MODE] 제주 여행 일정 예시입니다.\\n- 1일차: 성산일출봉\\n- 2일차: 한라산\\n- 3일차: 카페 투어", "summary": "제주 3일 여행 일정 요약"}
+                {"title": "제주 3박 4일 여행", "content": "[TEST MODE] 제주 여행 일정 예시입니다.\\n- 1일차: 성산일출봉\\n- 2일차: 한라산\\n- 3일차: 카페 투어", "summary": "제주 3일 여행 일정 요약", "plans": [{"date": "2025-12-19", "content": "1일차: 성산일출봉"}, {"date": "2025-12-20", "content": "2일차: 한라산"}]}
                 """;
 
-        // JSON 파싱하여 content, summary 분리
+        // Agent 응답 파싱 (JSON 형식: {"title": "...", "content": "...", "summary": "...", "plans": [...]})
         String content = agentResponse;
         String summary = null;
+        String title = null;
+        JsonNode plansArray = null;
+
         try {
             JsonNode node = objectMapper.readTree(agentResponse);
             content = node.has("content") ? node.get("content").asText() : agentResponse;
             summary = node.has("summary") ? node.get("summary").asText() : null;
+            title = node.has("title") ? node.get("title").asText() : null;
+            
+            if (node.has("plans") && node.get("plans").isArray()) {
+                plansArray = node.get("plans");
+            }
         } catch (Exception e) {
-            log.warn("AI 응답 JSON 파싱 실패, 원본 저장: {}", e.getMessage());
+            log.warn("Agent 응답 JSON 파싱 실패, 원본 저장: {}", e.getMessage());
         }
 
+        // Title이 있으면 META 업데이트
+        if (title != null && !title.isEmpty()) {
+            meta.setChatTitle(title);
+            chatRepository.save(meta);
+        }
+
+        // AI 응답 저장 (CHAT 타입)
         chatRepository.save(
                 ChatEntity.builder()
                         .conversationId(conversationId)
@@ -107,10 +122,32 @@ public class ChatService {
                         .build()
         );
 
+        // 날짜별 플래너 저장 (PLAN_DAY 타입)
+        if (plansArray != null && plansArray.isArray()) {
+            for (JsonNode planNode : plansArray) {
+                if (planNode.has("date") && planNode.has("content")) {
+                    String planDate = planNode.get("date").asText();
+                    String planContent = planNode.get("content").asText();
+                    
+                    chatRepository.save(
+                            ChatEntity.builder()
+                                    .conversationId(conversationId)
+                                    .type(ChatType.PLAN_DAY)
+                                    .role(ChatRole.AI)
+                                    .prompt(planContent)
+                                    .planDate(planDate)
+                                    .timestamp(now().toString())
+                                    .build()
+                    );
+                }
+            }
+        }
+
         return ChatResDto.builder()
                 .conversationId(conversationId)
                 .message(content)
                 .summary(summary)
+                .title(title)
                 .build();
     }
 
@@ -139,20 +176,35 @@ public class ChatService {
 
         // 테스트용 더미
         String agentResponse = """
-                {"content": "[TEST MODE] 제주 여행 일정 예시입니다.\\n- 1일차: 성산일출봉\\n- 2일차: 한라산\\n- 3일차: 카페 투어", "summary": "제주 3일 여행 일정 요약"}
+                {"title": "제주 3박 4일 여행", "content": "[TEST MODE] 제주 여행 일정 예시입니다.\\n- 1일차: 성산일출봉\\n- 2일차: 한라산\\n- 3일차: 카페 투어", "summary": "제주 3일 여행 일정 요약", "plans": [{"date": "2025-12-19", "content": "1일차: 성산일출봉"}, {"date": "2025-12-20", "content": "2일차: 한라산"}]}
                 """;
 
-        // JSON 파싱하여 content, summary 분리
+        // Agent 응답 파싱 (JSON 형식: {"title": "...", "content": "...", "summary": "...", "plans": [...]})
         String msgContent = agentResponse;
         String summary = null;
+        String title = null;
+        JsonNode plansArray = null;
+
         try {
             JsonNode node = objectMapper.readTree(agentResponse);
             msgContent = node.has("content") ? node.get("content").asText() : agentResponse;
             summary = node.has("summary") ? node.get("summary").asText() : null;
+            title = node.has("title") ? node.get("title").asText() : null;
+            
+            if (node.has("plans") && node.get("plans").isArray()) {
+                plansArray = node.get("plans");
+            }
         } catch (Exception e) {
-            log.warn("AI 응답 JSON 파싱 실패, 원본 저장: {}", e.getMessage());
+            log.warn("Agent 응답 JSON 파싱 실패, 원본 저장: {}", e.getMessage());
         }
 
+        // Title이 있으면 META 업데이트
+        if (title != null && !title.isEmpty()) {
+            meta.setChatTitle(title);
+            chatRepository.save(meta);
+        }
+
+        // AI 응답 저장 (CHAT 타입)
         chatRepository.save(
                 ChatEntity.builder()
                         .conversationId(conversationId)
@@ -164,10 +216,32 @@ public class ChatService {
                         .build()
         );
 
+        // 날짜별 플래너 저장 (PLAN_DAY 타입)
+        if (plansArray != null && plansArray.isArray()) {
+            for (JsonNode planNode : plansArray) {
+                if (planNode.has("date") && planNode.has("content")) {
+                    String planDate = planNode.get("date").asText();
+                    String planContent = planNode.get("content").asText();
+                    
+                    chatRepository.save(
+                            ChatEntity.builder()
+                                    .conversationId(conversationId)
+                                    .type(ChatType.PLAN_DAY)
+                                    .role(ChatRole.AI)
+                                    .prompt(planContent)
+                                    .planDate(planDate)
+                                    .timestamp(now().toString())
+                                    .build()
+                    );
+                }
+            }
+        }
+
         return ChatResDto.builder()
                 .conversationId(conversationId)
                 .message(msgContent)
                 .summary(summary)
+                .title(title)
                 .build();
     }
 
@@ -198,6 +272,17 @@ public class ChatService {
                 .travelInfo(meta.getTravelInfo())
                 .messages(messages)
                 .build();
+    }
+
+    /**
+     * 날짜별 플래너 조회
+     * @param conversationId 대화 ID
+     * @param date 날짜 (YYYY-MM-DD)
+     * @return 해당 날짜의 플래너 목록
+     */
+    public List<PlanDayResDto> getPlansByDate(String conversationId, String date) {
+        List<ChatEntity> plans = chatRepository.findPlansByDate(conversationId, date);
+        return PlanDayResDto.fromList(plans);
     }
 
 }

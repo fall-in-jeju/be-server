@@ -75,4 +75,18 @@ public class ChatDynamoRepository {
                 .stream()
                 .toList();
     }
+
+    /**
+     * conversationId와 날짜로 날짜별 플래너 조회
+     * @param conversationId 대화 ID
+     * @param date 날짜 (YYYY-MM-DD)
+     * @return 해당 날짜의 플래너 목록
+     */
+    public List<ChatEntity> findPlansByDate(String conversationId, String date) {
+        List<ChatEntity> allItems = findByConversationId(conversationId);
+        return allItems.stream()
+                .filter(item -> item.getType() == com.jeju.ormicamp.model.code.ChatType.PLAN_DAY
+                        && date.equals(item.getPlanDate()))
+                .toList();
+    }
 }

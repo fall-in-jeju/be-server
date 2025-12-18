@@ -5,11 +5,14 @@ import com.jeju.ormicamp.common.dto.BaseResponse;
 import com.jeju.ormicamp.model.dto.dynamodb.ChatConversationResDto;
 import com.jeju.ormicamp.model.dto.dynamodb.ChatReqDto;
 import com.jeju.ormicamp.model.dto.dynamodb.ChatResDto;
+import com.jeju.ormicamp.model.dto.dynamodb.PlanDayResDto;
 import com.jeju.ormicamp.service.dynamodb.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/chat")
@@ -51,6 +54,20 @@ public class ChatController {
                 BaseResponse.success(
                         "채팅 조회 성공",
                         chatService.getConversation(conversationId)
+                )
+        );
+    }
+
+    // 날짜별 플래너 조회
+    @GetMapping("/sessions/{conversationId}/plans/{date}")
+    public ResponseEntity<BaseResponse<List<PlanDayResDto>>> getPlansByDate(
+            @PathVariable String conversationId,
+            @PathVariable String date
+    ) {
+        return ResponseEntity.ok(
+                BaseResponse.success(
+                        "날짜별 플래너 조회 성공",
+                        chatService.getPlansByDate(conversationId, date)
                 )
         );
     }

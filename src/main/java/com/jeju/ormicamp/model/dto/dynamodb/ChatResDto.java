@@ -9,4 +9,5 @@ public class ChatResDto {
     private String conversationId;
     private String message;
     private String summary;
+    private String title;  // Agent가 생성한 제목
 }

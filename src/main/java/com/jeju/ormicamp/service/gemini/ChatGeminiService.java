@@ -13,6 +13,9 @@ import com.jeju.ormicamp.model.dto.dynamodb.ChatConversationResDto;
 import com.jeju.ormicamp.model.dto.dynamodb.ChatMessageResDto;
 import com.jeju.ormicamp.model.dto.dynamodb.ChatReqDto;
 import com.jeju.ormicamp.model.dto.dynamodb.ChatResDto;
+import com.jeju.ormicamp.model.dto.dynamodb.PlanDayResDto;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jeju.ormicamp.service.Bedrock.MakeJsonService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +36,7 @@ public class ChatGeminiService {
     private final ChatDynamoRepository chatRepository;
     private final MakeJsonService makeJsonService;
     private final AiService aiService;
+    private final ObjectMapper objectMapper;
 
     public ChatResDto startChat(ChatReqDto req, Long userId) {
 
@@ -44,14 +48,13 @@ public class ChatGeminiService {
                 .findByUserId(userId).orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         // 대화방 메타 데이터 초기 데이터 조회용
+        // 초기 title은 임시값, 나중에 Agent가 생성한 title로 업데이트됨
         ChatEntity meta = ChatEntity.builder()
                 .conversationId(conversationId)
                 .type(ChatType.PLAN_META)
-                .chatTitle(req.getContent())
+                .chatTitle("새 여행 계획")  // 임시 제목, Agent 응답으로 업데이트됨
                 .travelInfo(TravelInfoSnapshot.toSnapshot(travelInfo))
                 .build();
-
-        TravelInfoSnapshot response = TravelInfoSnapshot.toSnapshot(travelInfo);
 
         chatRepository.save(meta);
 
@@ -73,19 +76,69 @@ public class ChatGeminiService {
 
         String agentResponse = aiService.invoke(conversationId, payload);
 
+        // Agent 응답 파싱 (JSON 형식: {"title": "...", "content": "...", "summary": "...", "plans": [...]})
+        String content = agentResponse;
+        String summary = null;
+        String title = null;
+        JsonNode plansArray = null;
+
+        try {
+            JsonNode node = objectMapper.readTree(agentResponse);
+            content = node.has("content") ? node.get("content").asText() : agentResponse;
+            summary = node.has("summary") ? node.get("summary").asText() : null;
+            title = node.has("title") ? node.get("title").asText() : null;
+            
+            if (node.has("plans") && node.get("plans").isArray()) {
+                plansArray = node.get("plans");
+            }
+        } catch (Exception e) {
+            log.warn("Agent 응답 JSON 파싱 실패, 원본 저장: {}", e.getMessage());
+        }
+
+        // Title이 있으면 META 업데이트
+        if (title != null && !title.isEmpty()) {
+            meta.setChatTitle(title);
+            chatRepository.save(meta);
+        }
+
+        // AI 응답 저장 (CHAT 타입)
         chatRepository.save(
                 ChatEntity.builder()
                         .conversationId(conversationId)
                         .type(ChatType.CHAT)
                         .role(ChatRole.AI)
-                        .prompt(agentResponse)
+                        .prompt(content)
+                        .summary(summary)
                         .timestamp(now().toString())
                         .build()
         );
 
+        // 날짜별 플래너 저장 (PLAN_DAY 타입)
+        if (plansArray != null && plansArray.isArray()) {
+            for (JsonNode planNode : plansArray) {
+                if (planNode.has("date") && planNode.has("content")) {
+                    String planDate = planNode.get("date").asText();
+                    String planContent = planNode.get("content").asText();
+                    
+                    chatRepository.save(
+                            ChatEntity.builder()
+                                    .conversationId(conversationId)
+                                    .type(ChatType.PLAN_DAY)
+                                    .role(ChatRole.AI)
+                                    .prompt(planContent)
+                                    .planDate(planDate)
+                                    .timestamp(now().toString())
+                                    .build()
+                    );
+                }
+            }
+        }
+
         return ChatResDto.builder()
                 .conversationId(conversationId)
-                .message(agentResponse)
+                .message(content)
+                .summary(summary)
+                .title(title)
                 .build();
     }
 
@@ -109,31 +162,71 @@ public class ChatGeminiService {
                 meta.getTravelInfo()
         );
 
-        // TODO : agent 연결 시 주석 해제
-        // String agentResponse = agentService.sendDataToAgent(conversationId, payload).join();
+        String agentResponse = aiService.invoke(conversationId, payload);
 
-        // 테스트용 더미
-        String agentResponse = """
-                [TEST MODE]
-                제주 여행 일정 예시입니다.
-                - 1일차: 성산일출봉
-                - 2일차: 한라산
-                - 3일차: 카페 투어
-                """;
+        // Agent 응답 파싱 (JSON 형식: {"title": "...", "content": "...", "summary": "...", "plans": [...]})
+        String msgContent = agentResponse;
+        String summary = null;
+        String title = null;
+        JsonNode plansArray = null;
 
+        try {
+            JsonNode node = objectMapper.readTree(agentResponse);
+            msgContent = node.has("content") ? node.get("content").asText() : agentResponse;
+            summary = node.has("summary") ? node.get("summary").asText() : null;
+            title = node.has("title") ? node.get("title").asText() : null;
+            
+            if (node.has("plans") && node.get("plans").isArray()) {
+                plansArray = node.get("plans");
+            }
+        } catch (Exception e) {
+            log.warn("Agent 응답 JSON 파싱 실패, 원본 저장: {}", e.getMessage());
+        }
+
+        // Title이 있으면 META 업데이트
+        if (title != null && !title.isEmpty()) {
+            meta.setChatTitle(title);
+            chatRepository.save(meta);
+        }
+
+        // AI 응답 저장 (CHAT 타입)
         chatRepository.save(
                 ChatEntity.builder()
                         .conversationId(conversationId)
                         .type(ChatType.CHAT)
                         .role(ChatRole.AI)
-                        .prompt(agentResponse)
+                        .prompt(msgContent)
+                        .summary(summary)
                         .timestamp(now().toString())
                         .build()
         );
 
+        // 날짜별 플래너 저장 (PLAN_DAY 타입)
+        if (plansArray != null && plansArray.isArray()) {
+            for (JsonNode planNode : plansArray) {
+                if (planNode.has("date") && planNode.has("content")) {
+                    String planDate = planNode.get("date").asText();
+                    String planContent = planNode.get("content").asText();
+                    
+                    chatRepository.save(
+                            ChatEntity.builder()
+                                    .conversationId(conversationId)
+                                    .type(ChatType.PLAN_DAY)
+                                    .role(ChatRole.AI)
+                                    .prompt(planContent)
+                                    .planDate(planDate)
+                                    .timestamp(now().toString())
+                                    .build()
+                    );
+                }
+            }
+        }
+
         return ChatResDto.builder()
                 .conversationId(conversationId)
-                .message(agentResponse)
+                .message(msgContent)
+                .summary(summary)
+                .title(title)
                 .build();
     }
 
@@ -164,6 +257,17 @@ public class ChatGeminiService {
                 .travelInfo(meta.getTravelInfo())
                 .messages(messages)
                 .build();
+    }
+
+    /**
+     * 날짜별 플래너 조회
+     * @param conversationId 대화 ID
+     * @param date 날짜 (YYYY-MM-DD)
+     * @return 해당 날짜의 플래너 목록
+     */
+    public List<PlanDayResDto> getPlansByDate(String conversationId, String date) {
+        List<ChatEntity> plans = chatRepository.findPlansByDate(conversationId, date);
+        return PlanDayResDto.fromList(plans);
     }
 
 }

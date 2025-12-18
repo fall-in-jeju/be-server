@@ -28,8 +28,10 @@ public class GeminiAiService implements AiService {
     @Override
     public String invoke(String conversationId, String payload) {
 
+        // ✅ 최신 Gemini HTTP 엔드포인트 (v1, gemini-1.5-flash-latest)
+        // 공식 문서 기준: POST https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent
         String url =
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key="
+             "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key="
             + apiKey;
 
         Map<String, Object> body = Map.of(
@@ -48,21 +50,26 @@ public class GeminiAiService implements AiService {
         HttpEntity<Map<String, Object>> request =
                 new HttpEntity<>(body, headers);
 
-        ResponseEntity<Map> response =
-                restTemplate.postForEntity(url, request, Map.class);
+        try {
+            ResponseEntity<Map> response =
+                    restTemplate.postForEntity(url, request, Map.class);
 
-        // ✅ Gemini 응답 파싱 (안정 버전)
-        Map<String, Object> responseBody = response.getBody();
+            // ✅ Gemini 응답 파싱 (안정 버전)
+            Map<String, Object> responseBody = response.getBody();
 
-        List<Map<String, Object>> candidates =
-                (List<Map<String, Object>>) responseBody.get("candidates");
+            List<Map<String, Object>> candidates =
+                    (List<Map<String, Object>>) responseBody.get("candidates");
 
-        Map<String, Object> content =
-                (Map<String, Object>) candidates.get(0).get("content");
+            Map<String, Object> content =
+                    (Map<String, Object>) candidates.get(0).get("content");
 
-        List<Map<String, Object>> parts =
-                (List<Map<String, Object>>) content.get("parts");
+            List<Map<String, Object>> parts =
+                    (List<Map<String, Object>>) content.get("parts");
 
-        return (String) parts.get(0).get("text");
+            return (String) parts.get(0).get("text");
+        } catch (Exception e) {
+            log.error("Gemini 호출 오류 - url={}, message={}", url, e.getMessage(), e);
+            throw e;
+        }
     }
 }

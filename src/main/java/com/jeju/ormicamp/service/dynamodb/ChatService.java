@@ -9,6 +9,8 @@ import com.jeju.ormicamp.model.code.ChatType;
 import com.jeju.ormicamp.model.code.TravelInfoSnapshot;
 import com.jeju.ormicamp.model.domain.ChatEntity;
 import com.jeju.ormicamp.model.domain.TravelInfo;
+import com.jeju.ormicamp.model.dto.dynamodb.ChatConversationResDto;
+import com.jeju.ormicamp.model.dto.dynamodb.ChatMessageResDto;
 import com.jeju.ormicamp.model.dto.dynamodb.ChatReqDto;
 import com.jeju.ormicamp.model.dto.dynamodb.ChatResDto;
 //import com.jeju.ormicamp.service.Bedrock.BedRockAgentService;
@@ -17,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 
 import static java.time.LocalTime.now;
@@ -82,7 +86,7 @@ public class ChatService {
         ChatEntity meta = ChatEntity.builder()
                 .conversationId(conversationId)
                 .type(ChatType.PLAN_META)
-                .chatTitle(req.getChatTitle())
+                .chatTitle(req.getContent())
                 .travelInfo(TravelInfoSnapshot.toSnapshot(travelInfo))
                 .build();
 
@@ -160,26 +164,24 @@ public class ChatService {
      * @param userId 현재 로그인한 사용자 ID
      * @return AI 응답 메시지를 포함한 채팅 응답 DTO
      */
-    public ChatResDto sendMessage(ChatReqDto req, Long userId) {
-
-        String conversationId = req.getConversationId();
+    public ChatResDto sendMessage(String conversationId,String content, Long userId) {
 
         ChatEntity meta = chatRepository.findMeta(conversationId);
 
-        ChatEntity chat = ChatEntity.builder()
-                .conversationId(conversationId)
-                .type(ChatType.CHAT)
-                .role(ChatRole.USER)
-                .prompt(req.getContent())
-                .timestamp(now().toString())
-                .build();
-
-        chatRepository.save(chat);
+        chatRepository.save(
+                ChatEntity.builder()
+                        .conversationId(conversationId)
+                        .type(ChatType.CHAT)
+                        .role(ChatRole.USER)
+                        .prompt(content)
+                        .timestamp(now().toString())
+                        .build()
+        );
 
         String payload = makeJsonService.createJsonPayload(
                 conversationId,
-                req.getContent(),
-                chat.getTravelInfo()
+                content,
+                meta.getTravelInfo()
         );
 
         // TODO : agent 연결 시 주석 해제
@@ -209,4 +211,34 @@ public class ChatService {
                 .message(agentResponse)
                 .build();
     }
+
+    // 채팅방 정보 반환
+    public ChatConversationResDto getConversation(String conversationId) {
+
+        List<ChatEntity> items =
+                chatRepository.findByConversationId(conversationId);
+
+        if (items.isEmpty()) {
+            throw new CustomException(ErrorCode.NOT_FOUND);
+        }
+
+        ChatEntity meta = items.stream()
+                .filter(i -> i.getType() == ChatType.PLAN_META)
+                .findFirst()
+                .orElseThrow();
+
+        List<ChatMessageResDto> messages = items.stream()
+                .filter(i -> i.getType() == ChatType.CHAT)
+                .sorted(Comparator.comparing(ChatEntity::getTimestamp))
+                .map(ChatMessageResDto::from)
+                .toList();
+
+        return ChatConversationResDto.builder()
+                .conversationId(conversationId)
+                .chatTitle(meta.getChatTitle())
+                .travelInfo(meta.getTravelInfo())
+                .messages(messages)
+                .build();
+    }
+
 }

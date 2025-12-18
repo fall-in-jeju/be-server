@@ -10,7 +10,9 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 
+import java.util.List;
 
 
 @Repository
@@ -29,20 +31,15 @@ public class ChatDynamoRepository {
     }
 
     /**
-     * =====================
      * 1. 저장 (META / CHAT 공용)
-     * =====================
      */
     public void save(ChatEntity entity) {
         table().putItem(entity);
     }
 
     /**
-     * =====================
      * 2. META 조회
-     * =====================
-     * Service 코드에서:
-     * ChatEntity meta = chatRepository.findMeta(conversationId);
+     * Service 코드에서 ChatEntity meta = chatRepository.findMeta(conversationId);
      */
     public ChatEntity findMeta(String conversationId) {
 
@@ -58,5 +55,24 @@ public class ChatDynamoRepository {
         }
 
         return meta;
+    }
+
+    /**
+     * convesationId 기준 채팅방 조회
+     * @param conversationId PK값
+     * @return 해당 items 전부
+     */
+    public List<ChatEntity> findByConversationId(String conversationId) {
+        QueryConditional condition = QueryConditional.keyEqualTo(
+                Key.builder()
+                        .partitionValue("SESSION#" + conversationId)
+                        .build()
+        );
+
+        return table()
+                .query(condition)
+                .items()
+                .stream()
+                .toList();
     }
 }

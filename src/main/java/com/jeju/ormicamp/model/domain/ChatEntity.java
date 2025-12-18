@@ -24,7 +24,7 @@ public class ChatEntity {
     private String conversationId;
     private String timestamp;
 
-    // Enum을 만들어야하는지?
+
     private ChatType type;
     private ChatRole role;
 

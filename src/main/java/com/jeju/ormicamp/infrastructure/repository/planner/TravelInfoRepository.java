@@ -11,6 +11,6 @@ import java.util.Optional;
 @Repository
 public interface TravelInfoRepository extends JpaRepository<TravelInfo, Long> {
 
-    @Query("select t from TravelInfo t where t.user.id = :userId")
+    @Query("select t from TravelInfo t where t.user.id = :userId order by t.id desc limit 1")
     Optional<TravelInfo> findByUserId(@Param("userId") Long userId);
 }

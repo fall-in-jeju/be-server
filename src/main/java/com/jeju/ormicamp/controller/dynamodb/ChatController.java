@@ -6,6 +6,7 @@ import com.jeju.ormicamp.model.dto.dynamodb.ChatConversationResDto;
 import com.jeju.ormicamp.model.dto.dynamodb.ChatReqDto;
 import com.jeju.ormicamp.model.dto.dynamodb.ChatResDto;
 import com.jeju.ormicamp.model.dto.dynamodb.PlanDayResDto;
+import com.jeju.ormicamp.model.dto.dynamodb.MyPagePlanResDto;
 import com.jeju.ormicamp.service.dynamodb.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -68,6 +69,21 @@ public class ChatController {
                 BaseResponse.success(
                         "날짜별 플래너 조회 성공",
                         chatService.getPlansByDate(conversationId, date)
+                )
+        );
+    }
+
+    // 마이페이지 날짜 검색
+    @GetMapping("/mypage/plans/{date}")
+    public ResponseEntity<BaseResponse<List<MyPagePlanResDto>>> getPlansByDateForMyPage(
+            @PathVariable String date,
+            @AuthenticationPrincipal UserPrincipal user
+    ) {
+        Long userId = user.userId();
+        return ResponseEntity.ok(
+                BaseResponse.success(
+                        "마이페이지 날짜별 플래너 조회 성공",
+                        chatService.getPlansByDateForMyPage(userId, date)
                 )
         );
     }

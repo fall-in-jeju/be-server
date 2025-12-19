@@ -11,6 +11,7 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
+import software.amazon.awssdk.enhanced.dynamodb.model.ScanEnhancedRequest;
 
 import java.util.List;
 
@@ -87,6 +88,22 @@ public class ChatDynamoRepository {
         return allItems.stream()
                 .filter(item -> item.getType() == com.jeju.ormicamp.model.code.ChatType.PLAN_DAY
                         && date.equals(item.getPlanDate()))
+                .toList();
+    }
+
+    /**
+     * userId로 모든 META 조회 (마이페이지용)
+     * 주의: DynamoDB 스캔 사용 (비효율적, 나중에 GSI 추가 고려)
+     * @param userId 사용자 ID
+     * @return 해당 userId의 모든 META 목록
+     */
+    public List<ChatEntity> findAllMetaByUserId(Long userId) {
+        return table()
+                .scan(ScanEnhancedRequest.builder().build())
+                .items()
+                .stream()
+                .filter(item -> item.getType() == com.jeju.ormicamp.model.code.ChatType.PLAN_META
+                        && userId.equals(item.getUserId()))
                 .toList();
     }
 }

@@ -20,13 +20,15 @@ public class TravelInfoSnapshot {
     private LocalDate endDate;
     private Long capacity;
     private Long money;
+    private Region region;  // 여행 지역
 
     public static TravelInfoSnapshot toSnapshot(TravelInfo travelInfo) {
         return new TravelInfoSnapshot(
                 travelInfo.getStartDate(),
                 travelInfo.getEndDate(),
                 travelInfo.getCapacity(),
-                travelInfo.getMoney()
+                travelInfo.getMoney(),
+                travelInfo.getRegion()
         );
     }
 }

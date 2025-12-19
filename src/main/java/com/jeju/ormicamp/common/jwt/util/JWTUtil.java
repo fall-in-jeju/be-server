@@ -21,8 +21,7 @@ public class JWTUtil {
 
     public JWTUtil(
             @Value("${cognito.issuer}") String issuer,
-            @Value("${cognito.jwks-url}") String jwksUrl
-    ) throws Exception {
+            @Value("${cognito.jwks-url}") String jwksUrl) throws Exception {
         this.issuer = issuer;
         this.jwkProvider = new UrlJwkProvider(new URL(jwksUrl));
     }
@@ -30,6 +29,7 @@ public class JWTUtil {
     public String getSub(DecodedJWT jwt) {
         return jwt.getSubject();
     }
+
     public String getEmail(DecodedJWT jwt) {
         return jwt.getClaim("email").asString();
     }
@@ -45,6 +45,7 @@ public class JWTUtil {
             JWTVerifier verifier = JWT
                     .require(algorithm)
                     .withIssuer(issuer)
+                    .acceptLeeway(60) // 시간 오프셋(Clock Skew) 허용: 60초
                     .build();
 
             return verifier.verify(token);

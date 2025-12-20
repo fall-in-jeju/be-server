@@ -15,6 +15,7 @@ import com.jeju.ormicamp.model.dto.dynamodb.ChatReqDto;
 import com.jeju.ormicamp.model.dto.dynamodb.ChatResDto;
 import com.jeju.ormicamp.model.dto.dynamodb.PlanDayResDto;
 import com.jeju.ormicamp.model.dto.dynamodb.MyPagePlanResDto;
+import com.jeju.ormicamp.model.dto.dynamodb.VisitedPlaceResDto;
 //import com.jeju.ormicamp.service.Bedrock.BedRockAgentService;
 import com.jeju.ormicamp.service.Bedrock.MakeJsonService;
 import lombok.RequiredArgsConstructor;
@@ -26,9 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.time.LocalTime.now;
@@ -484,6 +483,53 @@ public class ChatService {
                 })
                 .filter(dto -> dto != null)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 사용자 방문 장소 목록 조회
+     * 모든 플래너에서 방문한 장소를 모아서 반환
+     * 
+     * @param userId 사용자 ID
+     * @return 방문한 장소 목록 (중복 제거)
+     */
+    public List<VisitedPlaceResDto> getVisitedPlaces(Long userId) {
+        // 1. userId로 모든 META 조회
+        List<ChatEntity> allMetas = chatRepository.findAllMetaByUserId(userId);
+        
+        // 2. 각 conversationId의 모든 PLAN_DAY 조회
+        Set<VisitedPlaceResDto> placesSet = new HashSet<>();
+        
+        for (ChatEntity meta : allMetas) {
+            String conversationId = meta.getConversationId();
+            List<ChatEntity> allPlans = chatRepository.findByConversationId(conversationId)
+                    .stream()
+                    .filter(item -> item.getType() == ChatType.PLAN_DAY)
+                    .toList();
+            
+            for (ChatEntity plan : allPlans) {
+                String content = plan.getPrompt(); // "서귀포시내 → 중문색달해변 → ..."
+                List<Double> latList = plan.getLat();
+                List<Double> lngList = plan.getLng();
+                
+                if (content != null && latList != null && lngList != null) {
+                    // content 파싱: "→" 기준으로 split
+                    String[] placeNames = content.split("→");
+                    
+                    for (int i = 0; i < placeNames.length && i < latList.size() && i < lngList.size(); i++) {
+                        String placeName = placeNames[i].trim();
+                        if (!placeName.isEmpty()) {
+                            placesSet.add(VisitedPlaceResDto.builder()
+                                    .placeName(placeName)
+                                    .lat(latList.get(i))
+                                    .lng(lngList.get(i))
+                                    .build());
+                        }
+                    }
+                }
+            }
+        }
+        
+        return new ArrayList<>(placesSet);
     }
 
 }

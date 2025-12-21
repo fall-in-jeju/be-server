@@ -8,6 +8,7 @@ import lombok.Setter;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Setter
@@ -21,6 +22,8 @@ public class TravelInfoSnapshot {
     private Long capacity;
     private Long money;
     private Region region;  // 여행 지역
+    private List<Theme> themes;  // 여행 테마
+    private Language language;  // 언어 선택
 
     public static TravelInfoSnapshot toSnapshot(TravelInfo travelInfo) {
         return new TravelInfoSnapshot(
@@ -28,7 +31,9 @@ public class TravelInfoSnapshot {
                 travelInfo.getEndDate(),
                 travelInfo.getCapacity(),
                 travelInfo.getMoney(),
-                travelInfo.getRegion()
+                travelInfo.getRegion(),
+                travelInfo.getThemes(),
+                travelInfo.getLanguage()
         );
     }
 }

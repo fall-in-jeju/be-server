@@ -2,9 +2,17 @@ package com.jeju.ormicamp.model.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import com.jeju.ormicamp.model.code.Region;
+import com.jeju.ormicamp.model.code.Theme;
+import com.jeju.ormicamp.model.code.Language;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 
 @Entity
@@ -13,7 +21,8 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TravelDate {
+@EntityListeners(AuditingEntityListener.class)
+public class TravelInfo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,8 +36,26 @@ public class TravelDate {
 
     private LocalDate endDate;
 
+    private Long Capacity;
+
+    private Long Money;
+
+    @Enumerated(EnumType.STRING)
+    private Region region;  // 여행 지역
+
+    @Enumerated(EnumType.STRING)
+    @ElementCollection
+    @CollectionTable(name = "travel_info_themes", joinColumns = @JoinColumn(name = "travel_info_id"))
+    private List<Theme> themes;  // 여행 테마 (복수 선택 가능)
+
+    @Enumerated(EnumType.STRING)
+    private Language language;  // 언어 선택
+
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createDate;
 
+    @LastModifiedDate
     private LocalDateTime updateDate;
 
 

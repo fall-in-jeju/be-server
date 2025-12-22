@@ -2,27 +2,85 @@ version: 0.2
 
 env:
   variables:
-    AWS_DEFAULT_REGION: "ap-northeast-2"
-    AWS_ACCOUNT_ID: "310688446727"
-    IMAGE_REPO_NAME: "backend-app"
+    AWS_DEFAULT_REGION: ap-northeast-2
+    IMAGE_REPO_NAME: backend-app
+    EKS_CLUSTER_NAME: my-backend-cluster # 실제 EKS 클러스터 이름으로 변경하세요.
+    SECRETS_MANAGER_SECRET_NAME: fall-in-jeju-dynamodb-secrets # Secrets Manager에 저장한 Secret 이름으로 변경하세요.
 
 phases:
   pre_build:
     commands:
-      - echo "Logging in to Amazon ECR..."
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
-      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-      - IMAGE_TAG=$COMMIT_HASH
-      - echo "Building image with tag $IMAGE_TAG"
+      - |
+        set -e
+        echo "Logging in to Amazon ECR..."
+
+        REPOSITORY_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}"
+        COMMIT_HASH="$(echo ${CODEBUILD_RESOLVED_SOURCE_VERSION} | cut -c 1-7)"
+        IMAGE_TAG="${COMMIT_HASH}"
+
+        aws ecr get-login-password --region "${AWS_DEFAULT_REGION}" \
+          | docker login --username AWS --password-stdin "${REPOSITORY_URI%/*}"
+
+        echo "Building image with tag ${IMAGE_TAG}"
 
   build:
     commands:
-      - docker build -t $REPOSITORY_URI:$IMAGE_TAG .
-      - docker tag  $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:latest
+      - |
+        docker build -t "${REPOSITORY_URI}:${IMAGE_TAG}" .
+        docker tag "${REPOSITORY_URI}:${IMAGE_TAG}" "${REPOSITORY_URI}:latest"
 
   post_build:
     commands:
-      - docker push $REPOSITORY_URI:$IMAGE_TAG
-      - docker push $REPOSITORY_URI:latest
-      - echo "Image pushed: $REPOSITORY_URI:$IMAGE_TAG"
+      - |
+        docker push "${REPOSITORY_URI}:${IMAGE_TAG}"
+        docker push "${REPOSITORY_URI}:latest"
+        echo "Image pushed: ${REPOSITORY_URI}:${IMAGE_TAG}"
+        
+        # --- EKS 클러스터 배포 단계 시작 ---
+
+        echo "Configuring kubectl for EKS cluster: ${EKS_CLUSTER_NAME}..."
+        # EKS 클러스터에 접근하기 위한 kubectl 설정을 업데이트합니다.
+        # CodeBuild의 IAM Role이 EKS 클러스터에 접근할 권한이 있어야 합니다.
+        aws eks update-kubeconfig --name "${EKS_CLUSTER_NAME}" --region "${AWS_DEFAULT_REGION}" \
+          || { echo "ERROR: Failed to configure kubectl. Check EKS_CLUSTER_NAME and CodeBuild IAM permissions."; exit 1; }
+
+        echo "Retrieving secrets from AWS Secrets Manager: ${SECRETS_MANAGER_SECRET_NAME}..."
+        # Secrets Manager에서 Secret 값을 가져옵니다.
+        # CodeBuild의 IAM Role이 secretsmanager:GetSecretValue 권한이 있어야 합니다.
+        SECRET_JSON=$(aws secretsmanager get-secret-value \
+            --secret-id "${SECRETS_MANAGER_SECRET_NAME}" \
+            --query SecretString \
+            --output text \
+            --region "${AWS_DEFAULT_REGION}" \
+            || { echo "ERROR: Failed to retrieve secrets from AWS Secrets Manager. Check Secret ID and CodeBuild IAM permissions."; exit 1; }
+        )
+
+        echo "Parsing secret values..."
+        # `jq`를 사용하여 JSON 문자열에서 개별 Secret 값을 파싱합니다.
+        # `install` 단계에 `jq` 설치가 필요할 수 있습니다.
+        AWS_REGION=$(echo "$SECRET_JSON" | jq -r '."aws.region"' || { echo "ERROR: Failed to parse aws.region from secret."; exit 1; })
+        DYNAMODB_TABLE_NAME=$(echo "$SECRET_JSON" | jq -r '."aws.dynamodb.table-name"' || { echo "ERROR: Failed to parse aws.dynamodb.table-name from secret."; exit 1; })
+        DYNAMODB_ACCESS_KEY=$(echo "$SECRET_JSON" | jq -r '."aws.dynamodb.credentials.access-key"' || { echo "ERROR: Failed to parse aws.dynamodb.credentials.access-key from secret."; exit 1; })
+        DYNAMODB_SECRET_KEY=$(echo "$SECRET_JSON" | jq -r '."aws.dynamodb.credentials.secret-key"' || { echo "ERROR: Failed to parse aws.dynamodb.credentials.secret-key from secret."; exit 1; })
+        BEDROCK_API_GATEWAY_URL=$(echo "$SECRET_JSON" | jq -r '."aws.bedrock.api-gateway-url"' || { echo "ERROR: Failed to parse aws.bedrock.api-gateway-url from secret."; exit 1; })
+
+        echo "Creating/updating Kubernetes Secret 'app-secrets'..."
+        # 파싱된 값들을 사용하여 Kubernetes Secret을 생성하거나 업데이트합니다.
+        # CodeBuild의 IAM Role (EKS RBAC 매핑을 통해) Kubernetes Secret을 생성/업데이트할 권한이 있어야 합니다.
+        kubectl create secret generic app-secrets \
+          --from-literal=aws.region="${AWS_REGION}" \
+          --from-literal=aws.dynamodb.table-name="${DYNAMODB_TABLE_NAME}" \
+          --from-literal=aws.dynamodb.credentials.access-key="${DYNAMODB_ACCESS_KEY}" \
+          --from-literal=aws.dynamodb.credentials.secret-key="${DYNAMODB_SECRET_KEY}" \
+          --from-literal=aws.bedrock.api-gateway-url="${BEDROCK_API_GATEWAY_URL}" \
+          --dry-run=client -o yaml | kubectl apply -f - \
+          || { echo "ERROR: Failed to create/update Kubernetes Secret 'app-secrets'. Check EKS RBAC permissions."; exit 1; }
+
+        echo "Applying Kustomize manifests..."
+        # Kustomize를 사용하여 매니페스트를 빌드하고 EKS 클러스터에 적용합니다.
+        # k8s-manifests/base 디렉토리 안에 kustomization.yml 파일이 있어야 합니다.
+        # `install` 단계에 `kustomize` 설치가 필요할 수 있습니다.
+        kustomize build k8s-manifests/base | kubectl apply -f - \
+          || { echo "ERROR: Failed to apply Kustomize manifests. Check Kustomize files and EKS RBAC permissions."; exit 1; }
+
+        echo "EKS deployment completed."

@@ -34,6 +34,9 @@ dependencies {
     implementation 'com.auth0:java-jwt:4.4.0'
     implementation 'com.auth0:jwks-rsa:0.22.0'
 
+    // Webflux
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
 
     // Spring DB
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -53,12 +56,20 @@ dependencies {
     implementation 'software.amazon.awssdk:dynamodb-enhanced:2.29.6'
     implementation 'software.amazon.awssdk:bedrockagentruntime:2.30.31'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'software.amazon.awssdk:s3:2.25.24'
+    implementation 'org.yaml:snakeyaml:2.2'
+
+    implementation 'commons-codec:commons-codec:1.16.0'
+
+    implementation(files("libs/tmap-sdk-1.3.aar"))
+    implementation(files("libs/vsm-tmap-sdk-v2-android-1.6.60.aar"))
 
     // 그외
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.h2database:h2'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:3.3.3'
     annotationProcessor 'org.projectlombok:lombok'
+
 }
 
 tasks.named('test') {

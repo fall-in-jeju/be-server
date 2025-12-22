@@ -56,4 +56,5 @@ public class ChatController {
         private String role;    // "USER" or "AI"
         private String content; // 메시지 내용
     }
+
 }

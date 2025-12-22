@@ -64,6 +64,11 @@ phases:
         DYNAMODB_SECRET_KEY=$(echo "$SECRET_JSON" | jq -r '."aws.dynamodb.credentials.secret-key"' || { echo "ERROR: Failed to parse aws.dynamodb.credentials.secret-key from secret."; exit 1; })
         BEDROCK_API_GATEWAY_URL=$(echo "$SECRET_JSON" | jq -r '."aws.bedrock.api-gateway-url"' || { echo "ERROR: Failed to parse aws.bedrock.api-gateway-url from secret."; exit 1; })
 
+        TMAP_APP_KEY=$(echo "$SECRET_JSON" | jq -r '."TMAP_APP_KEY"' || { echo "ERROR: Failed to parse TMAP_APP_KEY from secret."; exit 1; })
+        SPRING_DATASOURCE_URL=$(echo "$SECRET_JSON" | jq -r '."SPRING_DATASOURCE_URL"' || { echo "ERROR: Failed to parse SPRING_DATASOURCE_URL from secret."; exit 1; })
+        SPRING_DATASOURCE_USERNAME=$(echo "$SECRET_JSON" | jq -r '."SPRING_DATASOURCE_USERNAME"' || { echo "ERROR: Failed to parse SPRING_DATASOURCE_USERNAME from secret."; exit 1; })
+        SPRING_DATASOURCE_PASSWORD=$(echo "$SECRET_JSON" | jq -r '."SPRING_DATASOURCE_PASSWORD"' || { echo "ERROR: Failed to parse SPRING_DATASOURCE_PASSWORD from secret."; exit 1; })
+        
         echo "Creating/updating Kubernetes Secret 'app-secrets'..."
         # 파싱된 값들을 사용하여 Kubernetes Secret을 생성하거나 업데이트합니다.
         # CodeBuild의 IAM Role (EKS RBAC 매핑을 통해) Kubernetes Secret을 생성/업데이트할 권한이 있어야 합니다.
@@ -73,6 +78,10 @@ phases:
           --from-literal=aws.dynamodb.credentials.access-key="${DYNAMODB_ACCESS_KEY}" \
           --from-literal=aws.dynamodb.credentials.secret-key="${DYNAMODB_SECRET_KEY}" \
           --from-literal=aws.bedrock.api-gateway-url="${BEDROCK_API_GATEWAY_URL}" \
+          --from-literal=TMAP_APP_KEY="${TMAP_APP_KEY}" \           # --- 새로 추가
+          --from-literal=SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL}" \ # --- 새로 추가
+          --from-literal=SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME}" \ # --- 새로 추가
+          --from-literal=SPRING_DATASOURCE_PASSWORD="${SPRING_DATASOURCE_PASSWORD}" \ # --- 새로 추가
           --dry-run=client -o yaml | kubectl apply -f - \
           || { echo "ERROR: Failed to create/update Kubernetes Secret 'app-secrets'. Check EKS RBAC permissions."; exit 1; }
 

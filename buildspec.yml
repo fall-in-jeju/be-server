@@ -4,88 +4,116 @@ env:
   variables:
     AWS_DEFAULT_REGION: ap-northeast-2
     IMAGE_REPO_NAME: backend-app
-    EKS_CLUSTER_NAME: my-backend-cluster # 실제 EKS 클러스터 이름으로 변경하세요.
-    SECRETS_MANAGER_SECRET_NAME: fall-in-jeju-dynamodb-secrets # Secrets Manager에 저장한 Secret 이름으로 변경하세요.
+    EKS_CLUSTER_NAME: my-backend-cluster
+    SECRETS_MANAGER_SECRET_NAME: fall-in-jeju-dynamodb-secrets
 
 phases:
+  install:
+    commands:
+      - |
+        set -e
+        echo "===== INSTALL PHASE ====="
+
+        # jq
+        if command -v apt-get >/dev/null 2>&1; then
+          apt-get update && apt-get install -y jq
+        else
+          yum install -y jq
+        fi
+        jq --version
+
+        # kubectl
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+        kubectl version --client
+
+        # kustomize
+        curl -s https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh | bash
+        mv kustomize /usr/local/bin/kustomize
+        kustomize version
+
   pre_build:
     commands:
       - |
         set -e
-        echo "Logging in to Amazon ECR..."
+        echo "===== PRE BUILD ====="
 
+        AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
         REPOSITORY_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}"
-        COMMIT_HASH="$(echo ${CODEBUILD_RESOLVED_SOURCE_VERSION} | cut -c 1-7)"
-        IMAGE_TAG="${COMMIT_HASH}"
+        IMAGE_TAG=$(echo ${CODEBUILD_RESOLVED_SOURCE_VERSION} | cut -c 1-7)
 
-        aws ecr get-login-password --region "${AWS_DEFAULT_REGION}" \
-          | docker login --username AWS --password-stdin "${REPOSITORY_URI%/*}"
-
-        echo "Building image with tag ${IMAGE_TAG}"
+        echo "Logging in to ECR..."
+        aws ecr get-login-password --region ${AWS_DEFAULT_REGION} \
+          | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
 
   build:
     commands:
       - |
-        docker build -t "${REPOSITORY_URI}:${IMAGE_TAG}" .
-        docker tag "${REPOSITORY_URI}:${IMAGE_TAG}" "${REPOSITORY_URI}:latest"
+        set -e
+        echo "===== BUILD ====="
+
+        docker build -t ${REPOSITORY_URI}:${IMAGE_TAG} .
+        docker tag ${REPOSITORY_URI}:${IMAGE_TAG} ${REPOSITORY_URI}:latest
 
   post_build:
     commands:
       - |
         set -e
+        echo "===== POST BUILD ====="
 
-        docker push "${REPOSITORY_URI}:${IMAGE_TAG}"
-        docker push "${REPOSITORY_URI}:latest"
-        echo "Image pushed: ${REPOSITORY_URI}:${IMAGE_TAG}"
+        docker push ${REPOSITORY_URI}:${IMAGE_TAG}
+        docker push ${REPOSITORY_URI}:latest
 
-        # --- EKS 클러스터 배포 단계 시작 ---
+        echo "===== EKS DEPLOY ====="
 
-        echo "Configuring kubectl for EKS cluster: ${EKS_CLUSTER_NAME}..."
-        aws eks update-kubeconfig --name "${EKS_CLUSTER_NAME}" --region "${AWS_DEFAULT_REGION}" \
-          || { echo "ERROR: Failed to configure kubectl. Check EKS_CLUSTER_NAME and CodeBuild IAM permissions."; exit 1; }
+        aws eks update-kubeconfig \
+          --name ${EKS_CLUSTER_NAME} \
+          --region ${AWS_DEFAULT_REGION}
 
-        export KUBECONFIG="/root/.kube/config" # aws eks update-kubeconfig가 여기에 파일을 생성합니다.
-        echo "KUBECONFIG set to: ${KUBECONFIG}"
+        export KUBECONFIG=/root/.kube/config
 
-        echo "Retrieving secrets from AWS Secrets Manager: ${SECRETS_MANAGER_SECRET_NAME}..."
+        echo "Testing kubectl access..."
+        kubectl get ns
+
+        echo "Fetching secrets from Secrets Manager..."
         SECRET_JSON=$(aws secretsmanager get-secret-value \
-          --secret-id "${SECRETS_MANAGER_SECRET_NAME}" \
+          --secret-id ${SECRETS_MANAGER_SECRET_NAME} \
           --query SecretString \
-          --output text \
-          --region "${AWS_DEFAULT_REGION}"
-          ) || {
-        echo "ERROR: Failed to retrieve secrets from AWS Secrets Manager."
-          exit 1
-        }
+          --output text)
 
-        echo "Parsing secret values..."
-        AWS_REGION=$(echo "$SECRET_JSON" | jq -r '."aws.region"' || { echo "ERROR: Failed to parse aws.region from secret."; exit 1; })
-        DYNAMODB_TABLE_NAME=$(echo "$SECRET_JSON" | jq -r '."aws.dynamodb.table-name"' || { echo "ERROR: Failed to parse aws.dynamodb.table-name from secret."; exit 1; })
-        DYNAMODB_ACCESS_KEY=$(echo "$SECRET_JSON" | jq -r '."aws.dynamodb.credentials.access-key"' || { echo "ERROR: Failed to parse aws.dynamodb.credentials.access-key from secret."; exit 1; })
-        DYNAMODB_SECRET_KEY=$(echo "$SECRET_JSON" | jq -r '."aws.dynamodb.credentials.secret-key"' || { echo "ERROR: Failed to parse aws.dynamodb.credentials.secret-key from secret."; exit 1; })
-        BEDROCK_API_GATEWAY_URL=$(echo "$SECRET_JSON" | jq -r '."aws.bedrock.api-gateway-url"' || { echo "ERROR: Failed to parse aws.bedrock.api-gateway-url from secret."; exit 1; })
+        AWS_REGION=$(echo "$SECRET_JSON" | jq -r '."aws.region"')
+        DYNAMODB_TABLE_NAME=$(echo "$SECRET_JSON" | jq -r '."aws.dynamodb.table-name"')
+        DYNAMODB_ACCESS_KEY=$(echo "$SECRET_JSON" | jq -r '."aws.dynamodb.credentials.access-key"')
+        DYNAMODB_SECRET_KEY=$(echo "$SECRET_JSON" | jq -r '."aws.dynamodb.credentials.secret-key"')
+        BEDROCK_API_GATEWAY_URL=$(echo "$SECRET_JSON" | jq -r '."aws.bedrock.api-gateway-url"')
+        TMAP_APP_KEY=$(echo "$SECRET_JSON" | jq -r '."TMAP_APP_KEY"')
+        SPRING_DATASOURCE_URL=$(echo "$SECRET_JSON" | jq -r '."SPRING_DATASOURCE_URL"')
+        SPRING_DATASOURCE_USERNAME=$(echo "$SECRET_JSON" | jq -r '."SPRING_DATASOURCE_USERNAME"')
+        SPRING_DATASOURCE_PASSWORD=$(echo "$SECRET_JSON" | jq -r '."SPRING_DATASOURCE_PASSWORD"')
 
-        TMAP_APP_KEY=$(echo "$SECRET_JSON" | jq -r '."TMAP_APP_KEY"' || { echo "ERROR: Failed to parse TMAP_APP_KEY from secret."; exit 1; })
-        SPRING_DATASOURCE_URL=$(echo "$SECRET_JSON" | jq -r '."SPRING_DATASOURCE_URL"' || { echo "ERROR: Failed to parse SPRING_DATASOURCE_URL from secret."; exit 1; })
-        SPRING_DATASOURCE_USERNAME=$(echo "$SECRET_JSON" | jq -r '."SPRING_DATASOURCE_USERNAME"' || { echo "ERROR: Failed to parse SPRING_DATASOURCE_USERNAME from secret."; exit 1; })
-        SPRING_DATASOURCE_PASSWORD=$(echo "$SECRET_JSON" | jq -r '."SPRING_DATASOURCE_PASSWORD"' || { echo "ERROR: Failed to parse SPRING_DATASOURCE_PASSWORD from secret."; exit 1; })
-
-        echo "Creating/updating Kubernetes Secret 'app-secrets'..."
-        kubectl create secret generic app-secrets \
-          --from-literal=aws.region="${AWS_REGION}" \
-          --from-literal=aws.dynamodb.table-name="${DYNAMODB_TABLE_NAME}" \
-          --from-literal=aws.dynamodb.credentials.access-key="${DYNAMODB_ACCESS_KEY}" \
-          --from-literal=aws.dynamodb.credentials.secret-key="${DYNAMODB_SECRET_KEY}" \
-          --from-literal=aws.bedrock.api-gateway-url="${BEDROCK_API_GATEWAY_URL}" \
-          --from-literal=TMAP_APP_KEY="${TMAP_APP_KEY}" \
-          --from-literal=SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL}" \
-          --from-literal=SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME}" \
-          --from-literal=SPRING_DATASOURCE_PASSWORD="${SPRING_DATASOURCE_PASSWORD}" \
-          --dry-run=client -o yaml | kubectl apply -f - --validate=false \
-          || { echo "ERROR: Failed to create/update Kubernetes Secret 'app-secrets'. Check EKS RBAC permissions."; exit 1; }
-
-        echo "Applying Kustomize manifests..."
-        kustomize build k8s-manifests/base | kubectl apply -f - --validate=false \
-          || { echo "ERROR: Failed to apply Kustomize manifests. Check Kustomize files and EKS RBAC permissions."; exit 1; }
-
-        echo "EKS deployment completed."
+        echo "Creating Kubernetes Secret manifest..."
+        cat <<EOF > /tmp/app-secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+  namespace: default
+type: Opaque
+stringData:
+  aws.region: "${AWS_REGION}"
+  aws.dynamodb.table-name: "${DYNAMODB_TABLE_NAME}"
+  aws.dynamodb.credentials.access-key: "${DYNAMODB_ACCESS_KEY}"
+  aws.dynamodb.credentials.secret-key: "${DYNAMODB_SECRET_KEY}"
+  aws.bedrock.api-gateway-url: "${BEDROCK_API_GATEWAY_URL}"
+  TMAP_APP_KEY: "${TMAP_APP_KEY}"
+  SPRING_DATASOURCE_URL: "${SPRING_DATASOURCE_URL}"
+  SPRING_DATASOURCE_USERNAME: "${SPRING_DATASOURCE_USERNAME}"
+  SPRING_DATASOURCE_PASSWORD: "${SPRING_DATASOURCE_PASSWORD}"
+EOF
+  
+  kubectl apply -f /tmp/app-secrets.yaml --validate=false
+  
+  echo "Applying kustomize manifests..."
+  kustomize build k8s-manifests/base | kubectl apply -f - --validate=false
+  
+  echo "===== DEPLOY COMPLETE ====="

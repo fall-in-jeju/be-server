@@ -78,10 +78,10 @@ phases:
           --from-literal=aws.dynamodb.credentials.access-key="${DYNAMODB_ACCESS_KEY}" \
           --from-literal=aws.dynamodb.credentials.secret-key="${DYNAMODB_SECRET_KEY}" \
           --from-literal=aws.bedrock.api-gateway-url="${BEDROCK_API_GATEWAY_URL}" \
-          --from-literal=TMAP_APP_KEY="${TMAP_APP_KEY}" \           # --- 새로 추가
-          --from-literal=SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL}" \ # --- 새로 추가
-          --from-literal=SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME}" \ # --- 새로 추가
-          --from-literal=SPRING_DATASOURCE_PASSWORD="${SPRING_DATASOURCE_PASSWORD}" \ # --- 새로 추가
+          --from-literal=TMAP_APP_KEY="${TMAP_APP_KEY}" \           
+          --from-literal=SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL}" \ 
+          --from-literal=SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME}" \ 
+          --from-literal=SPRING_DATASOURCE_PASSWORD="${SPRING_DATASOURCE_PASSWORD}" \ 
           --dry-run=client -o yaml | kubectl apply -f - \
           || { echo "ERROR: Failed to create/update Kubernetes Secret 'app-secrets'. Check EKS RBAC permissions."; exit 1; }
 

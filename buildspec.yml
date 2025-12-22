@@ -7,7 +7,6 @@ env:
     EKS_CLUSTER_NAME: my-backend-cluster # 실제 EKS 클러스터 이름으로 변경하세요.
     SECRETS_MANAGER_SECRET_NAME: fall-in-jeju-dynamodb-secrets # Secrets Manager에 저장한 Secret 이름으로 변경하세요.
 
-
 phases:
   pre_build:
     commands:
@@ -85,4 +84,3 @@ phases:
           || { echo "ERROR: Failed to apply Kustomize manifests. Check Kustomize files and EKS RBAC permissions."; exit 1; }
 
         echo "EKS deployment completed."
-

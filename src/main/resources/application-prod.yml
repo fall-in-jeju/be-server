@@ -1,7 +1,7 @@
 spring:
   config:
     activate:
-      on-profile: production
+      on-profile: prod
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -24,7 +24,7 @@ spring:
 aws:
   region: ${AWS_REGION}
   dynamodb:
-    table-name: four-in-jeju
+    table-name: fall-in-jeju
   bedrock:
     api-gateway-url: ${BEDROCK_AGENT_API_GATEWAY_URL}
 

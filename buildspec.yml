@@ -81,11 +81,11 @@ phases:
           --from-literal=SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL}" \
           --from-literal=SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME}" \
           --from-literal=SPRING_DATASOURCE_PASSWORD="${SPRING_DATASOURCE_PASSWORD}" \
-          --dry-run=client -o yaml | kubectl apply -f - \
+          --dry-run=client -o yaml | kubectl apply -f - --validate=false \
           || { echo "ERROR: Failed to create/update Kubernetes Secret 'app-secrets'. Check EKS RBAC permissions."; exit 1; }
 
         echo "Applying Kustomize manifests..."
-        kustomize build k8s-manifests/base | kubectl apply -f - \
+        kustomize build k8s-manifests/base | kubectl apply -f - --validate=false \
           || { echo "ERROR: Failed to apply Kustomize manifests. Check Kustomize files and EKS RBAC permissions."; exit 1; }
 
         echo "EKS deployment completed."

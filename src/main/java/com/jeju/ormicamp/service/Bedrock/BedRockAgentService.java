@@ -3,77 +3,59 @@ package com.jeju.ormicamp.service.Bedrock;
 import com.jeju.ormicamp.common.config.bedrock.AwsProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.amazon.awssdk.core.SdkBytes;
-import software.amazon.awssdk.core.async.SdkPublisher;
-import software.amazon.awssdk.services.bedrockagentruntime.BedrockAgentRuntimeAsyncClient;
-import software.amazon.awssdk.services.bedrockagentruntime.model.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 @Slf4j
-//@Service
+@Service
 @RequiredArgsConstructor
 public class BedRockAgentService {
 
-    private final BedrockAgentRuntimeAsyncClient agentClient;
     private final AwsProperties awsProperties;
+    private final RestTemplate restTemplate = new RestTemplate();
 
-    public CompletableFuture<String> sendDataToAgent(String agentSessionId, String jsonData){
-
+    public CompletableFuture<String> sendDataToAgent(String agentSessionId, String jsonData) {
         CompletableFuture<String> resultFuture = new CompletableFuture<>();
-        StringBuilder finalText = new StringBuilder();
 
-        InvokeAgentRequest request = InvokeAgentRequest.builder()
-                // .agentId(awsProperties.getAgentId())
-                // .agentAliasId(awsProperties.getAliasId())
-                // 얘는 실제 seesionId아니고 그 역할하는 Id 값
-                .sessionId(agentSessionId)
-                .inputText(jsonData)
-                .enableTrace(true)
-                .build();
+        try {
+            String url = awsProperties.getAgentApiGatewayUrl();
 
-        InvokeAgentResponseHandler handler = new InvokeAgentResponseHandler() {
+            // 요청 헤더 설정
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
 
-            // 여기의 결과값
-            @Override
-            public void responseReceived(InvokeAgentResponse response) {
-            }
+            // 요청 body 생성 (팀원이 제공한 API 스펙에 맞게 수정 필요)
+            Map<String, Object> requestBody = Map.of(
+                    "sessionId", agentSessionId,
+                    "inputText", jsonData
+            );
 
-            /**
-             * 시나리오
-             * 1. 실제 응답 = ResponseStream이고
-             * 2. instanceof 에서 PayloadPart(=chunk)타입만 저장
-             * @param stream Agent 응답 조각
-             */
-            // 또 여기 결과값
-            @Override
-            public void onEventStream(SdkPublisher<ResponseStream> stream) {
-                stream.subscribe(event -> {
-                    if (event instanceof PayloadPart payload) {
-                        SdkBytes bytes = payload.bytes();
-                        String text = new String(bytes.asByteArray(), UTF_8);
-                        finalText.append(text);
-                    }
-                });
-            }
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
-            // 또 여기 결과값
-            @Override
-            public void exceptionOccurred(Throwable throwable) {
-                resultFuture.completeExceptionally(throwable);
-            }
+            // API Gateway로 HTTP POST 요청
+            @SuppressWarnings("unchecked")
+            ResponseEntity<Map<String, Object>> response = (ResponseEntity<Map<String, Object>>) (ResponseEntity<?>) 
+                    restTemplate.postForEntity(url, request, Map.class);
 
-            // 을 최종적으로 모아서 답변
-            @Override
-            public void complete() {
-                resultFuture.complete(finalText.toString());
-            }
-        };
-        //TODO : 프론트받는 쪽에서도 sub해야함
+            // 응답 파싱 (팀원이 제공한 응답 형식에 맞게 수정 필요)
+            Map<String, Object> responseBody = response.getBody();
+            String result = responseBody != null && responseBody.containsKey("output") 
+                    ? (String) responseBody.get("output")
+                    : responseBody != null ? responseBody.toString() : "";
 
-        agentClient.invokeAgent(request, handler);
+            resultFuture.complete(result);
+        } catch (Exception e) {
+            log.error("Agent API Gateway 호출 실패: {}", e.getMessage(), e);
+            resultFuture.completeExceptionally(e);
+        }
+
         return resultFuture;
     }
 }

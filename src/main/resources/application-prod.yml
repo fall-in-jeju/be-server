@@ -25,10 +25,8 @@ aws:
   region: ${AWS_REGION}
   dynamodb:
     table-name: four-in-jeju
-#  bedrock:
-#    agent-id: ${BEDROCK_AGENT_ID}
-#    alias-id: ${BEDROCK_ALIAS_ID}
-#    region : ${AGENT_REGION}
+  bedrock:
+    api-gateway-url: ${BEDROCK_AGENT_API_GATEWAY_URL}
 
 jwt:
   secret: ${JWT_SECRET}

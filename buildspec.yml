@@ -99,8 +99,7 @@ stringData:
   SPRING_DATASOURCE_URL: "${SPRING_DATASOURCE_URL}"
   SPRING_DATASOURCE_USERNAME: "${SPRING_DATASOURCE_USERNAME}"
   SPRING_DATASOURCE_PASSWORD: "${SPRING_DATASOURCE_PASSWORD}"
-EOF
-        
+EOF        
         kubectl apply -f /tmp/app-secrets.yaml --validate=false
         kustomize build k8s-manifests/base | kubectl apply -f - --validate=false
         echo "===== DEPLOY COMPLETE ====="

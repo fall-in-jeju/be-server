@@ -14,7 +14,6 @@ phases:
         set -e
         echo "===== INSTALL PHASE ====="
 
-        # jq
         if command -v apt-get >/dev/null 2>&1; then
           apt-get update && apt-get install -y jq
         else
@@ -22,12 +21,10 @@ phases:
         fi
         jq --version
 
-        # kubectl
         curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
         install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
         kubectl version --client
 
-        # kustomize
         curl -s https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh | bash
         mv kustomize /usr/local/bin/kustomize
         kustomize version
@@ -42,7 +39,6 @@ phases:
         REPOSITORY_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}"
         IMAGE_TAG=$(echo ${CODEBUILD_RESOLVED_SOURCE_VERSION} | cut -c 1-7)
 
-        echo "Logging in to ECR..."
         aws ecr get-login-password --region ${AWS_DEFAULT_REGION} \
           | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
 
@@ -64,18 +60,13 @@ phases:
         docker push ${REPOSITORY_URI}:${IMAGE_TAG}
         docker push ${REPOSITORY_URI}:latest
 
-        echo "===== EKS DEPLOY ====="
-
         aws eks update-kubeconfig \
           --name ${EKS_CLUSTER_NAME} \
           --region ${AWS_DEFAULT_REGION}
 
         export KUBECONFIG=/root/.kube/config
-
-        echo "Testing kubectl access..."
         kubectl get ns
 
-        echo "Fetching secrets from Secrets Manager..."
         SECRET_JSON=$(aws secretsmanager get-secret-value \
           --secret-id ${SECRETS_MANAGER_SECRET_NAME} \
           --query SecretString \
@@ -91,13 +82,12 @@ phases:
         SPRING_DATASOURCE_USERNAME=$(echo "$SECRET_JSON" | jq -r '."SPRING_DATASOURCE_USERNAME"')
         SPRING_DATASOURCE_PASSWORD=$(echo "$SECRET_JSON" | jq -r '."SPRING_DATASOURCE_PASSWORD"')
 
-        echo "Creating Kubernetes Secret manifest..."
         cat <<EOF > /tmp/app-secrets.yaml
 apiVersion: v1
 kind: Secret
 metadata:
   name: app-secrets
-  namespace: default
+  namespace: prod
 type: Opaque
 stringData:
   aws.region: "${AWS_REGION}"
@@ -112,8 +102,5 @@ stringData:
 EOF
   
   kubectl apply -f /tmp/app-secrets.yaml --validate=false
-  
-  echo "Applying kustomize manifests..."
   kustomize build k8s-manifests/base | kubectl apply -f - --validate=false
-  
   echo "===== DEPLOY COMPLETE ====="

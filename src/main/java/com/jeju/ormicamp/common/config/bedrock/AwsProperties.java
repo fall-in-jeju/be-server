@@ -23,10 +23,7 @@ public class AwsProperties {
     @Value("${aws.dynamodb.credentials.secret-key}")
     private String secretKey;
 
-//    @Value("${aws.bedrock.agent-id}")
-//    private String agentId;
-
-//    @Value("${aws.bedrock.alias-id}")
-//    private String aliasId;
+    @Value("${aws.bedrock.api-gateway-url}")
+    private String agentApiGatewayUrl;
 
 }

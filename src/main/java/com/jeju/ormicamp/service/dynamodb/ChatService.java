@@ -16,7 +16,7 @@ import com.jeju.ormicamp.model.dto.dynamodb.ChatResDto;
 import com.jeju.ormicamp.model.dto.dynamodb.PlanDayResDto;
 import com.jeju.ormicamp.model.dto.dynamodb.MyPagePlanResDto;
 import com.jeju.ormicamp.model.dto.dynamodb.VisitedPlaceResDto;
-//import com.jeju.ormicamp.service.Bedrock.BedRockAgentService;
+import com.jeju.ormicamp.service.Bedrock.BedRockAgentService;
 import com.jeju.ormicamp.service.Bedrock.MakeJsonService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +39,7 @@ public class ChatService {
 
     private final TravelInfoRepository travelInfoRepository;
     private final ChatDynamoRepository chatRepository;
-    //private final BedRockAgentService agentService;
+    private final BedRockAgentService agentService;
     private final MakeJsonService makeJsonService;
     private final ObjectMapper objectMapper;
 
@@ -81,37 +81,25 @@ public class ChatService {
                 meta.getTravelInfo()
         );
 
-        // TODO : agent 연결 시 주석 해제
-        // String agentResponse = agentService.sendDataToAgent(conversationId, payload).join();
+        // Agent API Gateway 호출
+        String agentResponse = agentService.sendDataToAgent(conversationId, payload).join();
 
-        // 테스트용 더미
-        String agentResponse = """
-                {
-                  "type": "PLAN",
-                  "title": "제주 남부 여행 일정",
-                  "summary": "RAG 원본 데이터와 Tmap 실시간 좌표를 결합한 정확한 일정입니다.",
-                  "plans": [
-                    {
-                      "date": "2025-12-04",
-                      "content": "서귀포시내 → 중문색달해변 → 천지연폭포 → 정방폭포 → 서귀포올레시장 → 서귀포숙소",
-                      "lat": [33.249664, 33.25143, 33.24, 33.24, 33.25, 33.25],
-                      "lng": [126.56034, 126.434824, 126.55, 126.57, 126.56, 126.56]
-                    },
-                    {
-                      "date": "2025-12-05",
-                      "content": "서귀포시내 → 남원읍 감귤카페 → 안덕면 식과함께 → 남원읍 제주동백수목원 → 남원읍 쇠소깍다리 이야기길 → 서귀포숙소",
-                      "lat": [33.249664, 33.3352599, 33.3094417, 33.273167, 33.273167, 33.25],
-                      "lng": [126.56034, 126.6681117, 126.3521864, 126.70446, 126.70446, 126.56]
-                    },
-                    {
-                      "date": "2025-12-06",
-                      "content": "서귀포시내 → 비브레이브커피로스터스 → 중문색달해변 → 서귀포혁신도시 → 안덕면 카페 → 서귀포숙소",
-                      "lat": [33.249664, 33.2529956, 33.25143, 33.25, 33.3094417, 33.25],
-                      "lng": [126.56034, 126.5109449, 126.434824, 126.44, 126.3521864, 126.56]
-                    }
-                  ]
-                }                                                                                                                                                                                                                                                           ""\"
-                """;
+        // 테스트용 더미 (Agent 연결 전까지 사용)
+        // String agentResponse = """
+        //         {
+        //           "type": "PLAN",
+        //           "title": "제주 남부 여행 일정",
+        //           "summary": "RAG 원본 데이터와 Tmap 실시간 좌표를 결합한 정확한 일정입니다.",
+        //           "plans": [
+        //             {
+        //               "date": "2025-12-04",
+        //               "content": "서귀포시내 → 중문색달해변 → 천지연폭포 → 정방폭포 → 서귀포올레시장 → 서귀포숙소",
+        //               "lat": [33.249664, 33.25143, 33.24, 33.24, 33.25, 33.25],
+        //               "lng": [126.56034, 126.434824, 126.55, 126.57, 126.56, 126.56]
+        //             }
+        //           ]
+        //         }
+        //         """;
 
         // Agent 응답 파싱 (type에 따라 다르게 처리)
         String content = null;
@@ -250,37 +238,25 @@ public class ChatService {
                 meta.getTravelInfo()
         );
 
-        // TODO : agent 연결 시 주석 해제
-        // String agentResponse = agentService.sendDataToAgent(conversationId, payload).join();
+        // Agent API Gateway 호출
+        String agentResponse = agentService.sendDataToAgent(conversationId, payload).join();
 
-        // 테스트용 더미
-        String agentResponse = """
-                {
-                  "type": "PLAN",
-                  "title": "제주 남부 여행 일정",
-                  "summary": "RAG 원본 데이터와 Tmap 실시간 좌표를 결합한 정확한 일정입니다.",
-                  "plans": [
-                    {
-                      "date": "2025-12-04",
-                      "content": "서귀포시내 → 중문색달해변 → 천지연폭포 → 정방폭포 → 서귀포올레시장 → 서귀포숙소",
-                      "lat": [33.249664, 33.25143, 33.24, 33.24, 33.25, 33.25],
-                      "lng": [126.56034, 126.434824, 126.55, 126.57, 126.56, 126.56]
-                    },
-                    {
-                      "date": "2025-12-05",
-                      "content": "서귀포시내 → 남원읍 감귤카페 → 안덕면 식과함께 → 남원읍 제주동백수목원 → 남원읍 쇠소깍다리 이야기길 → 서귀포숙소",
-                      "lat": [33.249664, 33.3352599, 33.3094417, 33.273167, 33.273167, 33.25],
-                      "lng": [126.56034, 126.6681117, 126.3521864, 126.70446, 126.70446, 126.56]
-                    },
-                    {
-                      "date": "2025-12-06",
-                      "content": "서귀포시내 → 비브레이브커피로스터스 → 중문색달해변 → 서귀포혁신도시 → 안덕면 카페 → 서귀포숙소",
-                      "lat": [33.249664, 33.2529956, 33.25143, 33.25, 33.3094417, 33.25],
-                      "lng": [126.56034, 126.5109449, 126.434824, 126.44, 126.3521864, 126.56]
-                    }
-                  ]
-                }                                                                                                                                                                                                                                                              ""\"
-                """;
+        // 테스트용 더미 (Agent 연결 전까지 사용)
+        // String agentResponse = """
+        //         {
+        //           "type": "PLAN",
+        //           "title": "제주 남부 여행 일정",
+        //           "summary": "RAG 원본 데이터와 Tmap 실시간 좌표를 결합한 정확한 일정입니다.",
+        //           "plans": [
+        //             {
+        //               "date": "2025-12-04",
+        //               "content": "서귀포시내 → 중문색달해변 → 천지연폭포 → 정방폭포 → 서귀포올레시장 → 서귀포숙소",
+        //               "lat": [33.249664, 33.25143, 33.24, 33.24, 33.25, 33.25],
+        //               "lng": [126.56034, 126.434824, 126.55, 126.57, 126.56, 126.56]
+        //             }
+        //           ]
+        //         }
+        //         """;
 
         // Agent 응답 파싱 (type에 따라 다르게 처리)
         String msgContent = null;

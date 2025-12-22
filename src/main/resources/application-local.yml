@@ -3,6 +3,11 @@ spring:
     activate:
       on-profile: local
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
   datasource:
     url: ${DATASOURCE_URL_LOCAL}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -11,7 +16,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     show-sql: true
     properties:
       hibernate:
@@ -21,11 +26,11 @@ spring:
     console:
       enabled: false
 
-  autoconfigure:
-     exclude:
-       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
-       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
-       - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
+#  autoconfigure:
+#     exclude:
+#       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+#       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+#       - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
 
 gemini:
   api:
@@ -68,6 +73,10 @@ origin:
 logging:
   level:
     root: info
+
+tmap:
+  base-url: https://apis.openapi.sk.com
+  app-key: ${TMAP_APP_KEY}   # 로컬은 환경변수로 주입 권장
 
 server:
   port: 8001

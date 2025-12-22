@@ -12,7 +12,6 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 @Configuration
-@Profile("local") // 로컬 프로필 활성화 시 사용
 @RequiredArgsConstructor
 public class AwsLocalConfig {
 

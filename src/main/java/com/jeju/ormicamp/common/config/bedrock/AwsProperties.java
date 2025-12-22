@@ -8,9 +8,6 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 public class AwsProperties {
 
-//    @Value("${aws.bedrock.region}")
-//    private String bedRockRegion;
-
     @Value("${aws.region}")
     private String DynamoRegion;
 

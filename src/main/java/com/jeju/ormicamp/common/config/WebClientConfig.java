@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
@@ -16,7 +15,7 @@ import org.springframework.web.util.DefaultUriBuilderFactory;
 @EnableConfigurationProperties(TmapProperties.class)
 public class WebClientConfig {
 
-    @Bean
+    @Bean(name = "disasterWebClient")
     public WebClient disasterWebClient() {
         return WebClient.builder()
                 .baseUrl("https://www.safetydata.go.kr")
@@ -29,7 +28,6 @@ public class WebClientConfig {
     }
 
     @Bean(name = "tmapWebClient")
-    @Primary
     public WebClient tmapWebClient(TmapProperties props) {
 
         log.info("[TMAP CONFIG] baseUrl = {}", props.getBaseUrl());

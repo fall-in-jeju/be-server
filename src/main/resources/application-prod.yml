@@ -1,7 +1,7 @@
 spring:
   config:
     activate:
-      on-profile: production
+      on-profile: prod
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -24,11 +24,9 @@ spring:
 aws:
   region: ${AWS_REGION}
   dynamodb:
-    table-name: four-in-jeju
-#  bedrock:
-#    agent-id: ${BEDROCK_AGENT_ID}
-#    alias-id: ${BEDROCK_ALIAS_ID}
-#    region : ${AGENT_REGION}
+    table-name: fall-in-jeju
+  bedrock:
+    api-gateway-url: ${BEDROCK_AGENT_API_GATEWAY_URL}
 
 jwt:
   secret: ${JWT_SECRET}
@@ -56,5 +54,9 @@ management:
   health:
     redis:
       enabled: false
+
+tmap:
+  base-url: https://apis.openapi.sk.com
+  app-key: ${TMAP_APP_KEY}
 server:
   port: 8001

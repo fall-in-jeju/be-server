@@ -76,4 +76,13 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        String accept = request.getHeader("Accept");
+
+        return path.startsWith("/api/sse")
+                || (accept != null && accept.contains("text/event-stream"));
+    }
 }

@@ -1,16 +1,20 @@
 package com.jeju.ormicamp.controller.dynamodb;
 
+import com.jeju.ormicamp.common.customUserDetail.UserPrincipal;
 import com.jeju.ormicamp.common.dto.BaseResponse;
-import com.jeju.ormicamp.model.dynamodb.ChatReqDto;
-import com.jeju.ormicamp.model.dynamodb.ChatResDto;
+import com.jeju.ormicamp.model.dto.dynamodb.ChatConversationResDto;
+import com.jeju.ormicamp.model.dto.dynamodb.ChatReqDto;
+import com.jeju.ormicamp.model.dto.dynamodb.ChatResDto;
+import com.jeju.ormicamp.model.dto.dynamodb.PlanDayResDto;
+import com.jeju.ormicamp.model.dto.dynamodb.MyPagePlanResDto;
+import com.jeju.ormicamp.model.dto.dynamodb.VisitedPlaceResDto;
 import com.jeju.ormicamp.service.dynamodb.ChatService;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/chat")
@@ -19,41 +23,84 @@ public class ChatController {
 
     private final ChatService chatService;
 
-    // --- [API 1] 메시지 저장 ---
-    // 프론트엔드에서 유저가 메시지를 보냈을 때,
-    // 혹은 AI API에서 응답을 받았을 때 호출
-    @PostMapping
-    public ResponseEntity<BaseResponse<String>> saveMessage(
-            @RequestBody ChatReqDto request) { // 1. ReqDto로 받음
-        String sessionId = request.getSessionId();
-        // DTO에서 데이터를 꺼내서 서비스로 넘김
-        // 프론트에서 ID를 안 보냈다면? (첫 채팅) -> 서버가 새로 생성
-        if (sessionId == null || sessionId.isEmpty()) {
-            sessionId = UUID.randomUUID().toString();
-            System.out.println(" [새 세션 시작] ID 발급: " + sessionId);
-        } else {
-            System.out.println(" [대화 이어하기] ID: " + sessionId);
-        }
-        chatService.saveChatMessage(sessionId, request.getRole(), request.getContent());
+    @PostMapping("/sessions")
+    public ResponseEntity<BaseResponse<ChatResDto>> startChat(
+            @RequestBody ChatReqDto req,
+            @AuthenticationPrincipal UserPrincipal user
+    ) {
+        Long userId = user.userId();
+        ChatResDto result = chatService.startChat(req,userId);
+        return ResponseEntity.ok()
+                .body(BaseResponse.success("대화 시작", result));
+    }
+
+    @PostMapping("/sessions/{conversationId}/messages")
+    public ResponseEntity<BaseResponse<ChatResDto>> chatMessage(
+            @PathVariable String conversationId,
+            @RequestBody ChatReqDto req,
+            @AuthenticationPrincipal UserPrincipal user
+    ) {
+        Long userId = user.userId();
+        String content = req.getContent();
+        ChatResDto result = chatService.sendMessage(conversationId,content,userId);
+        return ResponseEntity.ok()
+                .body(BaseResponse.success("소통중..", result));
+    }
+
+    // 채팅방 조회
+    @GetMapping("/sessions/{conversationId}")
+    public ResponseEntity<BaseResponse<ChatConversationResDto>> getConversation(
+            @PathVariable String conversationId
+    ) {
         return ResponseEntity.ok(
-                BaseResponse.success("대화 시작", sessionId)
+                BaseResponse.success(
+                        "채팅 조회 성공",
+                        chatService.getConversation(conversationId)
+                )
         );
     }
 
-    @GetMapping("/{sessionId}")
-    public ResponseEntity<BaseResponse<List<ChatResDto>>> getChatHistory(@PathVariable String sessionId) { // 2. ResDto 리스트로 반환
-
-        List<ChatResDto> history = chatService.getChatHistory(sessionId);
+    // 날짜별 플래너 조회
+    @GetMapping("/sessions/{conversationId}/plans/{date}")
+    public ResponseEntity<BaseResponse<List<PlanDayResDto>>> getPlansByDate(
+            @PathVariable String conversationId,
+            @PathVariable String date
+    ) {
         return ResponseEntity.ok(
-                BaseResponse.success("채팅 내역 조회 성공", history)
+                BaseResponse.success(
+                        "날짜별 플래너 조회 성공",
+                        chatService.getPlansByDate(conversationId, date)
+                )
         );
     }
 
-    // (내부 클래스) 요청 받을 때 쓸 DTO
-    @Data
-    public static class ChatRequestDto {
-        private String sessionId;
-        private String role;    // "USER" or "AI"
-        private String content; // 메시지 내용
+    // 마이페이지 날짜 검색
+    @GetMapping("/mypage/plans/{date}")
+    public ResponseEntity<BaseResponse<List<MyPagePlanResDto>>> getPlansByDateForMyPage(
+            @PathVariable String date,
+            @AuthenticationPrincipal UserPrincipal user
+    ) {
+        Long userId = user.userId();
+        return ResponseEntity.ok(
+                BaseResponse.success(
+                        "마이페이지 날짜별 플래너 조회 성공",
+                        chatService.getPlansByDateForMyPage(userId, date)
+                )
+        );
     }
+
+    // 방문 장소 목록 조회
+    @GetMapping("/mypage/places")
+    public ResponseEntity<BaseResponse<List<VisitedPlaceResDto>>> getVisitedPlaces(
+            @AuthenticationPrincipal UserPrincipal user
+    ) {
+        Long userId = user.userId();
+        return ResponseEntity.ok(
+                BaseResponse.success(
+                        "방문 장소 목록 조회 성공",
+                        chatService.getVisitedPlaces(userId)
+                )
+        );
+    }
+
 }

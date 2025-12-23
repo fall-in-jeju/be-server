@@ -21,38 +21,23 @@ public class BedRockAgentService {
     private final AwsProperties awsProperties;
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public CompletableFuture<String> sendDataToAgent(String agentSessionId, String jsonData) {
+    public CompletableFuture<String> sendDataToAgent(String payloadJson) {
         CompletableFuture<String> resultFuture = new CompletableFuture<>();
 
         try {
-            String url = awsProperties.getAgentApiGatewayUrl();
+            String url = awsProperties.getAgentApiGatewayUrl(); // 예: http://localhost:9001/api/v1/invoke
 
-            // 요청 헤더 설정
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            // 요청 body 생성 (팀원이 제공한 API 스펙에 맞게 수정 필요)
-            Map<String, Object> requestBody = Map.of(
-                    "sessionId", agentSessionId,
-                    "inputText", jsonData
-            );
+            // ✅ 핵심: 랩핑 제거, payloadJson을 그대로 body로 전송
+            HttpEntity<String> request = new HttpEntity<>(payloadJson, headers);
 
-            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+            ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
 
-            // API Gateway로 HTTP POST 요청
-            @SuppressWarnings("unchecked")
-            ResponseEntity<Map<String, Object>> response = (ResponseEntity<Map<String, Object>>) (ResponseEntity<?>) 
-                    restTemplate.postForEntity(url, request, Map.class);
-
-            // 응답 파싱 (팀원이 제공한 응답 형식에 맞게 수정 필요)
-            Map<String, Object> responseBody = response.getBody();
-            String result = responseBody != null && responseBody.containsKey("output") 
-                    ? (String) responseBody.get("output")
-                    : responseBody != null ? responseBody.toString() : "";
-
-            resultFuture.complete(result);
+            resultFuture.complete(response.getBody());
         } catch (Exception e) {
-            log.error("Agent API Gateway 호출 실패: {}", e.getMessage(), e);
+            log.error("Agent 호출 실패: {}", e.getMessage(), e);
             resultFuture.completeExceptionally(e);
         }
 

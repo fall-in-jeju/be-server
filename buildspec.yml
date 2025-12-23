@@ -10,65 +10,47 @@ env:
 phases:
   install:
     commands:
+      - set -e
+      - echo "===== INSTALL ====="
       - |
-        set -e
-        echo "===== INSTALL PHASE ====="
-
         if command -v apt-get >/dev/null 2>&1; then
           apt-get update && apt-get install -y jq
         else
           yum install -y jq
         fi
-        jq --version
-
-        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-        install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-        kubectl version --client
-
-        curl -s https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh | bash
-        mv kustomize /usr/local/bin/kustomize
-        kustomize version
+      - curl -LO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+      - install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+      - curl -s https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh | bash
+      - mv kustomize /usr/local/bin/kustomize
 
   pre_build:
     commands:
-      - |
-        set -e
-        echo "===== PRE BUILD ====="
-
-        AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-        REPOSITORY_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}"
-        IMAGE_TAG=$(echo ${CODEBUILD_RESOLVED_SOURCE_VERSION} | cut -c 1-7)
-
-        aws ecr get-login-password --region ${AWS_DEFAULT_REGION} \
-          | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
+      - set -e
+      - echo "===== PRE_BUILD ====="
+      - REPOSITORY_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}"
+      - IMAGE_TAG=$(echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" | cut -c 1-7)
+      - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "${REPOSITORY_URI%/*}"
 
   build:
     commands:
-      - |
-        set -e
-        echo "===== BUILD ====="
-
-        docker build -t ${REPOSITORY_URI}:${IMAGE_TAG} .
-        docker tag ${REPOSITORY_URI}:${IMAGE_TAG} ${REPOSITORY_URI}:latest
+      - set -e
+      - echo "===== BUILD ====="
+      - docker build -t "$REPOSITORY_URI:$IMAGE_TAG" .
+      - docker tag "$REPOSITORY_URI:$IMAGE_TAG" "$REPOSITORY_URI:latest"
 
   post_build:
     commands:
+      - set -e
+      - echo "===== POST_BUILD ====="
+      - docker push "$REPOSITORY_URI:$IMAGE_TAG"
+      - docker push "$REPOSITORY_URI:latest"
+
+      - aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_DEFAULT_REGION"
+      - kubectl get ns
+
       - |
-        set -e
-        echo "===== POST BUILD ====="
-
-        docker push ${REPOSITORY_URI}:${IMAGE_TAG}
-        docker push ${REPOSITORY_URI}:latest
-
-        aws eks update-kubeconfig \
-          --name ${EKS_CLUSTER_NAME} \
-          --region ${AWS_DEFAULT_REGION}
-
-        export KUBECONFIG=/root/.kube/config
-        kubectl get ns
-
         SECRET_JSON=$(aws secretsmanager get-secret-value \
-          --secret-id ${SECRETS_MANAGER_SECRET_NAME} \
+          --secret-id "$SECRETS_MANAGER_SECRET_NAME" \
           --query SecretString \
           --output text)
 
@@ -82,24 +64,18 @@ phases:
         SPRING_DATASOURCE_USERNAME=$(echo "$SECRET_JSON" | jq -r '."SPRING_DATASOURCE_USERNAME"')
         SPRING_DATASOURCE_PASSWORD=$(echo "$SECRET_JSON" | jq -r '."SPRING_DATASOURCE_PASSWORD"')
 
-        cat <<EOF > /tmp/app-secrets.yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: app-secrets
-  namespace: prod
-type: Opaque
-stringData:
-  aws.region: "${AWS_REGION}"
-  aws.dynamodb.table-name: "${DYNAMODB_TABLE_NAME}"
-  aws.dynamodb.credentials.access-key: "${DYNAMODB_ACCESS_KEY}"
-  aws.dynamodb.credentials.secret-key: "${DYNAMODB_SECRET_KEY}"
-  aws.bedrock.api-gateway-url: "${BEDROCK_API_GATEWAY_URL}"
-  TMAP_APP_KEY: "${TMAP_APP_KEY}"
-  SPRING_DATASOURCE_URL: "${SPRING_DATASOURCE_URL}"
-  SPRING_DATASOURCE_USERNAME: "${SPRING_DATASOURCE_USERNAME}"
-  SPRING_DATASOURCE_PASSWORD: "${SPRING_DATASOURCE_PASSWORD}"
-EOF
-        kubectl apply -f /tmp/app-secrets.yaml --validate=false
-        kustomize build k8s-manifests/base | kubectl apply -f - --validate=false
-        echo "===== DEPLOY COMPLETE ====="
+        kubectl create secret generic app-secrets \
+          --from-literal=aws.region="$AWS_REGION" \
+          --from-literal=aws.dynamodb.table-name="$DYNAMODB_TABLE_NAME" \
+          --from-literal=aws.dynamodb.credentials.access-key="$DYNAMODB_ACCESS_KEY" \
+          --from-literal=aws.dynamodb.credentials.secret-key="$DYNAMODB_SECRET_KEY" \
+          --from-literal=aws.bedrock.api-gateway-url="$BEDROCK_API_GATEWAY_URL" \
+          --from-literal=TMAP_APP_KEY="$TMAP_APP_KEY" \
+          --from-literal=SPRING_DATASOURCE_URL="$SPRING_DATASOURCE_URL" \
+          --from-literal=SPRING_DATASOURCE_USERNAME="$SPRING_DATASOURCE_USERNAME" \
+          --from-literal=SPRING_DATASOURCE_PASSWORD="$SPRING_DATASOURCE_PASSWORD" \
+          --dry-run=client -o yaml | kubectl apply -f -
+
+      - kustomize build k8s-manifests/base | kubectl apply -f -
+
+      - echo "===== DEPLOY COMPLETE ====="

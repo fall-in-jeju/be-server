@@ -82,7 +82,7 @@ public class ChatService {
         );
 
         // Agent API Gateway 호출
-        String agentResponse = agentService.sendDataToAgent(conversationId, payload).join();
+        String agentResponse = agentService.sendDataToAgent(payload).join();
 
         // 테스트용 더미 (Agent 연결 전까지 사용)
         // String agentResponse = """
@@ -239,7 +239,7 @@ public class ChatService {
         );
 
         // Agent API Gateway 호출
-        String agentResponse = agentService.sendDataToAgent(conversationId, payload).join();
+        String agentResponse = agentService.sendDataToAgent(payload).join();
 
         // 테스트용 더미 (Agent 연결 전까지 사용)
         // String agentResponse = """

@@ -153,3 +153,6 @@
 
 
 ---
+
+## Architecture
+<img width="1070" height="603" alt="Image" src="https://github.com/user-attachments/assets/04577bbb-68db-4066-b4cf-2be5e963a709" />
